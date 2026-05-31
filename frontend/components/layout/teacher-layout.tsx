@@ -16,6 +16,7 @@ import {
   Menu,
   GraduationCap,
   Clock,
+  HelpCircle,
 } from 'lucide-react';
 
 const sidebarItems = [
@@ -24,6 +25,7 @@ const sidebarItems = [
   { name: 'کلاس‌های من', href: '/teacher/classes', icon: Users },
   { name: 'حضور و غیاب', href: '/teacher/attendance', icon: ClipboardList },
   { name: 'نمرات', href: '/teacher/grades', icon: BookOpen },
+  { name: 'بانک سوالات', href: '/teacher/questions', icon: HelpCircle },
   { name: 'پیام‌ها', href: '/teacher/messages', icon: MessageSquare },
   { name: 'پروفایل', href: '/teacher/profile', icon: User },
 ];
@@ -64,7 +66,8 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-white border-l border-gray-200 fixed right-0 top-0 bottom-0 z-40">
-        <div className="p-6 border-b border-gray-200">
+        <Link href="/teacher/dashboard" className="block">
+        <div className="p-6 border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <GraduationCap className="h-6 w-6 text-blue-600" />
@@ -75,6 +78,7 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
             </div>
           </div>
         </div>
+        </Link>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {sidebarItems.map((item) => {

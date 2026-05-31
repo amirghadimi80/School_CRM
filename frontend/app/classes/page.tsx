@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BookOpen, Plus, Users, Eye, GraduationCap } from 'lucide-react';
+import { BookOpen, Plus, Users, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -30,14 +30,12 @@ interface Class {
   id: number;
   name: string;
   gradeLevel: string;
-  teacherName: string;
   studentCount: number;
   roomNumber?: string;
   schedule?: string;
 }
 
 const GRADE_LEVELS = ['اول', 'دوم', 'سوم', 'چهارم', 'پنجم', 'ششم', 'هفتم', 'هشتم', 'نهم', 'دهم', 'یازدهم', 'دوازدهم'];
-const TEACHERS = ['علی کریمی', 'سارا نوری', 'رضا محمدی', 'مریم احمدی', 'حسن رضایی'];
 
 export default function ClassesPage() {
   const router = useRouter();
@@ -51,7 +49,6 @@ export default function ClassesPage() {
   const [newClass, setNewClass] = useState({
     name: '',
     gradeLevel: '',
-    teacherName: '',
     roomNumber: '',
     schedule: '',
   });
@@ -64,16 +61,16 @@ export default function ClassesPage() {
     }
 
     setClasses([
-      { id: 1, name: '101', gradeLevel: 'دهم', teacherName: 'علی کریمی', studentCount: 25, roomNumber: '12', schedule: 'شنبه تا چهارشنبه 8-12' },
-      { id: 2, name: '201', gradeLevel: 'یازدهم', teacherName: 'سارا نوری', studentCount: 22, roomNumber: '15', schedule: 'شنبه تا چهارشنبه 8-12' },
-      { id: 3, name: '301', gradeLevel: 'دوازدهم', teacherName: 'رضا محمدی', studentCount: 28, roomNumber: '18', schedule: 'شنبه تا چهارشنبه 8-12' },
+      { id: 1, name: '101', gradeLevel: 'دهم', studentCount: 25, roomNumber: '12', schedule: 'شنبه تا چهارشنبه 8-12' },
+      { id: 2, name: '201', gradeLevel: 'یازدهم', studentCount: 22, roomNumber: '15', schedule: 'شنبه تا چهارشنبه 8-12' },
+      { id: 3, name: '301', gradeLevel: 'دوازدهم', studentCount: 28, roomNumber: '18', schedule: 'شنبه تا چهارشنبه 8-12' },
     ]);
     setIsLoading(false);
   }, [router]);
 
   const handleAddClass = () => {
-    if (!newClass.name || !newClass.gradeLevel || !newClass.teacherName) {
-      toast({ title: 'خطا', description: 'لطفاً نام کلاس، پایه و معلم را انتخاب کنید', variant: 'destructive' });
+    if (!newClass.name || !newClass.gradeLevel) {
+      toast({ title: 'خطا', description: 'لطفاً نام کلاس و پایه را انتخاب کنید', variant: 'destructive' });
       return;
     }
 
@@ -85,7 +82,7 @@ export default function ClassesPage() {
 
     setClasses([...classes, cls]);
     setIsAddDialogOpen(false);
-    setNewClass({ name: '', gradeLevel: '', teacherName: '', roomNumber: '', schedule: '' });
+    setNewClass({ name: '', gradeLevel: '', roomNumber: '', schedule: '' });
     toast({ title: 'موفق', description: 'کلاس با موفقیت اضافه شد' });
   };
 
@@ -128,17 +125,6 @@ export default function ClassesPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>معلم</Label>
-                  <Select value={newClass.teacherName} onValueChange={(value) => setNewClass({...newClass, teacherName: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="انتخاب کنید" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TEACHERS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="roomNumber">شماره کلاس</Label>
                   <Input id="roomNumber" value={newClass.roomNumber} onChange={(e) => setNewClass({...newClass, roomNumber: e.target.value})} />
                 </div>
@@ -169,12 +155,9 @@ export default function ClassesPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">پایه {cls.gradeLevel}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{cls.studentCount} دانش‌آموز</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground">{cls.teacherName}</span>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{cls.studentCount} دانش‌آموز</span>
                   </div>
                 </CardContent>
               </Card>
@@ -198,15 +181,9 @@ export default function ClassesPage() {
                     <p className="text-muted-foreground">پایه {selectedClass.gradeLevel}</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                    <span>معلم: {selectedClass.teacherName}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedClass.studentCount} دانش‌آموز</span>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span>{selectedClass.studentCount} دانش‌آموز</span>
                 </div>
                 {selectedClass.roomNumber && (
                   <div className="space-y-1">

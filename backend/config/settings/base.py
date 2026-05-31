@@ -14,6 +14,9 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-in-production')
 
 DEBUG = False
 
+# Disable automatic trailing slash redirect (fixes API POST issues)
+APPEND_SLASH = False
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 DJANGO_APPS = [
@@ -50,6 +53,7 @@ LOCAL_APPS = [
     'apps.finance',
     'apps.notifications',
     'apps.analytics',
+    'apps.exams',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

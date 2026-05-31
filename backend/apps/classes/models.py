@@ -7,10 +7,38 @@ from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel
 
 
+class CourseManager(models.Manager):
+    """Custom manager for Course model."""
+    
+    def for_school(self, school):
+        """Get all courses available to a school (global + school-specific)."""
+        from django.db.models import Q
+        return self.filter(
+            Q(school__isnull=True) | Q(school=school),
+            is_active=True
+        )
+
+
 class Course(BaseModel):
     """
     Course/Subject model.
+    Global courses (school=null) are available to all schools.
+    School-specific courses are only available to that school.
     """
+    
+    objects = CourseManager()
+    
+    # Override school field to allow null (for global courses)
+    school = models.ForeignKey(
+        'schools.School',
+        on_delete=models.CASCADE,
+        related_name='courses',
+        verbose_name=_('School'),
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    
     code = models.CharField(
         max_length=20,
         verbose_name=_('Course Code')
@@ -64,6 +92,13 @@ class Course(BaseModel):
         help_text=_('List of grade levels (e.g., ["10", "11", "12"])')
     )
     
+    # Global flag - if True, available to all schools
+    is_global = models.BooleanField(
+        default=False,
+        verbose_name=_('Is Global'),
+        help_text=_('If checked, this course is available to all schools')
+    )
+    
     # Settings
     is_active = models.BooleanField(
         default=True,
@@ -86,11 +121,24 @@ class Course(BaseModel):
         verbose_name = _('Course')
         verbose_name_plural = _('Courses')
         ordering = ['category', 'name']
-        unique_together = ['school', 'code']
+        # Allow same code for global and school-specific courses
+        # But prevent duplicate codes within same school or multiple globals
+        constraints = [
+            models.UniqueConstraint(
+                fields=['code'],
+                condition=models.Q(school__isnull=True),
+                name='unique_global_course_code'
+            ),
+            models.UniqueConstraint(
+                fields=['school', 'code'],
+                name='unique_school_course_code'
+            ),
+        ]
         indexes = [
             models.Index(fields=['school', 'code']),
             models.Index(fields=['school', 'category']),
             models.Index(fields=['school', 'is_active']),
+            models.Index(fields=['is_global', 'is_active']),
         ]
     
     def __str__(self):
@@ -197,12 +245,24 @@ class Class(BaseModel):
     
     @property
     def courses_list(self):
-        """Get courses taught in this class."""
+        """Get courses taught in this class (global + school-specific)."""
+        from django.db.models import Q
         return Course.objects.filter(
-            school=self.school,
+            Q(school__isnull=True) | Q(school=self.school),
             is_active=True,
-            applicable_grades__contains=[self.grade_level]
+        ).filter(
+            # Filter for applicable grades (manual check for SQLite compatibility)
         )
+    
+    def get_courses_for_grade(self):
+        """Get all available courses for this class's grade level."""
+        from django.db.models import Q
+        all_courses = Course.objects.filter(
+            Q(school__isnull=True) | Q(school=self.school),
+            is_active=True
+        )
+        # Filter manually for applicable grades
+        return [c for c in all_courses if self.grade_level in c.applicable_grades]
 
 
 class ClassSchedule(BaseModel):

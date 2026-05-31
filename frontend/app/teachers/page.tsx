@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GraduationCap, Plus, Search, Eye, Phone, Mail, BookOpen, Clock } from 'lucide-react';
+import { GraduationCap, Plus, Search, Eye, Phone, Mail, BookOpen, Clock, ChevronDown, UserCircle, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -26,6 +26,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Teacher {
   id: number;
@@ -50,7 +57,9 @@ export default function TeachersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [editTeacher, setEditTeacher] = useState<Teacher | null>(null);
 
   const [newTeacher, setNewTeacher] = useState({
     firstName: '',
@@ -105,6 +114,27 @@ export default function TeachersPage() {
   const handleViewTeacher = (teacher: Teacher) => {
     setSelectedTeacher(teacher);
     setIsViewDialogOpen(true);
+  };
+
+  const handleEditTeacher = (teacher: Teacher) => {
+    setEditTeacher(teacher);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateTeacher = () => {
+    if (!editTeacher) return;
+
+    setTeachers(teachers.map(t => t.id === editTeacher.id ? editTeacher : t));
+    setIsEditDialogOpen(false);
+    setEditTeacher(null);
+    toast({ title: 'موفق', description: 'معلم با موفقیت ویرایش شد' });
+  };
+
+  const handleDeleteTeacher = (teacherId: number) => {
+    if (!confirm('آیا از حذف این معلم اطمینان دارید؟')) return;
+
+    setTeachers(teachers.filter(t => t.id !== teacherId));
+    toast({ title: 'موفق', description: 'معلم حذف شد', variant: 'destructive' });
   };
 
   return (
@@ -215,10 +245,34 @@ export default function TeachersPage() {
                         </p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => handleViewTeacher(teacher)}>
-                      <Eye className="ml-2 h-4 w-4" />
-                      مشاهده
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          عملیات
+                          <ChevronDown className="mr-1 h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <Link href={`/teacher/dashboard?id=${teacher.id}`}>
+                          <DropdownMenuItem className="gap-2 cursor-pointer">
+                            <UserCircle className="h-4 w-4" />
+                            ورود به پنل استاد
+                          </DropdownMenuItem>
+                        </Link>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleEditTeacher(teacher)} className="gap-2 cursor-pointer">
+                          <Pencil className="h-4 w-4" />
+                          ویرایش
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteTeacher(teacher.id)} 
+                          className="gap-2 cursor-pointer text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          حذف
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 ))}
               </div>
@@ -281,6 +335,98 @@ export default function TeachersPage() {
             )}
             <DialogFooter>
               <Button onClick={() => setIsViewDialogOpen(false)}>بستن</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Teacher Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>ویرایش معلم</DialogTitle>
+              <DialogDescription>اطلاعات معلم را ویرایش کنید</DialogDescription>
+            </DialogHeader>
+            {editTeacher && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editFirstName">نام</Label>
+                    <Input 
+                      id="editFirstName" 
+                      value={editTeacher.firstName} 
+                      onChange={(e) => setEditTeacher({...editTeacher, firstName: e.target.value})} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editLastName">نام خانوادگی</Label>
+                    <Input 
+                      id="editLastName" 
+                      value={editTeacher.lastName} 
+                      onChange={(e) => setEditTeacher({...editTeacher, lastName: e.target.value})} 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editEmployeeId">کد پرسنلی</Label>
+                  <Input 
+                    id="editEmployeeId" 
+                    value={editTeacher.employeeId} 
+                    onChange={(e) => setEditTeacher({...editTeacher, employeeId: e.target.value})} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>تخصص</Label>
+                  <Select 
+                    value={editTeacher.specialization} 
+                    onValueChange={(value) => setEditTeacher({...editTeacher, specialization: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="انتخاب کنید" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SPECIALIZATIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editDegree">مدرک تحصیلی</Label>
+                  <Input 
+                    id="editDegree" 
+                    value={editTeacher.degree || ''} 
+                    onChange={(e) => setEditTeacher({...editTeacher, degree: e.target.value})} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editExperience">سابقه (سال)</Label>
+                  <Input 
+                    id="editExperience" 
+                    type="number" 
+                    value={editTeacher.experience || ''} 
+                    onChange={(e) => setEditTeacher({...editTeacher, experience: Number(e.target.value)})} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editPhone">شماره تماس</Label>
+                  <Input 
+                    id="editPhone" 
+                    value={editTeacher.phone || ''} 
+                    onChange={(e) => setEditTeacher({...editTeacher, phone: e.target.value})} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editEmail">ایمیل</Label>
+                  <Input 
+                    id="editEmail" 
+                    type="email" 
+                    value={editTeacher.email || ''} 
+                    onChange={(e) => setEditTeacher({...editTeacher, email: e.target.value})} 
+                  />
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>انصراف</Button>
+              <Button onClick={handleUpdateTeacher}>ذخیره تغییرات</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
