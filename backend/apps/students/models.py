@@ -7,6 +7,32 @@ from django.utils.translation import gettext_lazy as _
 from apps.core.models import BaseModel
 
 
+class Parent(BaseModel):
+    """
+    Parent model connecting a user with the 'parent' role to one or more students.
+    """
+    user = models.OneToOneField(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='parent_profile',
+        verbose_name=_('User Account'),
+        limit_choices_to={'role': 'parent'}
+    )
+    children = models.ManyToManyField(
+        'Student',
+        related_name='parents',
+        verbose_name=_('Children')
+    )
+
+    class Meta:
+        verbose_name = _('Parent')
+        verbose_name_plural = _('Parents')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Parent: {self.user.get_full_name()}"
+
+
 class Student(BaseModel):
     """
     Student model extending the base user profile.

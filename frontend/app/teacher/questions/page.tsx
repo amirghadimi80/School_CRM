@@ -1,14 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { QuestionFormPopup } from "@/components/teacher/QuestionFormPopup";
 import { QuestionList } from "@/components/teacher/QuestionList";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data for testing
-const MOCK_QUESTIONS = [
+interface Question {
+  id: number;
+  title: string;
+  question_type: string;
+  points: string;
+  difficulty: string;
+  grade_level: string;
+  branch: string;
+  course_name: string;
+  status: string;
+  is_approved: boolean;
+  is_public: boolean;
+  usage_count: number;
+  created_by_teacher_name: string;
+  created_at: string;
+}
+
+const MOCK_QUESTIONS: Question[] = [
   {
     id: 1,
     title: "مساحت مثلث",
@@ -25,72 +41,83 @@ const MOCK_QUESTIONS = [
     created_by_teacher_name: "علی محمدی",
     created_at: "2024-01-15T10:30:00Z",
   },
-  {
-    id: 2,
-    title: "قانون نیوتن",
-    question_type: "short_answer",
-    points: "3",
-    difficulty: "hard",
-    grade_level: "11",
-    branch: "science",
-    course_name: "فیزیک 2",
-    status: "draft",
-    is_approved: false,
-    is_public: false,
-    usage_count: 0,
-    created_by_teacher_name: "علی محمدی",
-    created_at: "2024-01-20T14:20:00Z",
-  },
 ];
 
 export default function TeacherQuestionsPage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
   const { toast } = useToast();
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async (signal?: AbortSignal) => {
     try {
-      const response = await fetch("/api/v1/exams/questions/");
-      if (!response.ok) throw new Error("Failed to fetch questions");
+      setIsLoading(true);
+
+      const response = await fetch("/api/v1/exams/questions/", {
+        signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+
       const data = await response.json();
-      setQuestions(data.results || data);
-    } catch (error) {
-      // Use mock data if API fails
-      console.log("Using mock data - API not available");
+
+      setQuestions(Array.isArray(data) ? data : data.results ?? []);
+    } catch (error: any) {
+      if (error?.name === "AbortError") return;
+
+      console.error("Failed to fetch questions:", error);
+
       setQuestions(MOCK_QUESTIONS);
+
       toast({
-        title: "اطلاع",
-        description: "دیتای نمونه نمایش داده می‌شود",
+        title: "خطا",
+        description: "امکان دریافت سوالات وجود ندارد",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
-    fetchQuestions();
-  }, []);
+    const controller = new AbortController();
 
-  const handleQuestionCreated = () => {
-    fetchQuestions();
+    fetchQuestions(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+  }, [fetchQuestions]);
+
+  const handleQuestionCreated = async () => {
+    setIsPopupOpen(false);
+
+    await fetchQuestions();
+
     toast({
-      title: "Success",
-      description: "Question saved successfully",
+      title: "موفق",
+      description: "سوال با موفقیت ذخیره شد",
     });
   };
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">سوالات من</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="mt-1 text-gray-500">
             مدیریت و ساخت سوالات برای بانک سوالات
           </p>
         </div>
-        <Button onClick={() => setIsPopupOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
+
+        <Button
+          onClick={() => setIsPopupOpen(true)}
+          className="gap-2"
+        >
+          <Plus className="h-4 w-4" />
           سوال جدید
         </Button>
       </div>
@@ -98,7 +125,7 @@ export default function TeacherQuestionsPage() {
       <QuestionList
         questions={questions}
         isLoading={isLoading}
-        onRefresh={fetchQuestions}
+        onRefresh={() => fetchQuestions()}
       />
 
       <QuestionFormPopup

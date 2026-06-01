@@ -133,13 +133,23 @@ class IsOwnerOrParent(permissions.BasePermission):
     """
     def has_object_permission(self, request, view, obj):
         user = request.user
-        
-        # Allow if user is the owner
-        if hasattr(user, 'student_profile') and hasattr(obj, 'student'):
-            if obj.student == user.student_profile:
-                return True
-        
-        # Allow if user is a parent of the student
-        # TODO: Implement parent-student relationship checking
-        
+
+        # The object being checked must be related to a student.
+        # This permission assumes the object has a 'student' attribute.
+        target_student = getattr(obj, 'student', None)
+        if not target_student:
+            # If the object is a Student instance itself
+            if isinstance(obj, 'students.Student'):
+                target_student = obj
+            else:
+                return False
+
+        # 1. Allow if the user is the student themselves.
+        if hasattr(user, 'student_profile') and user.student_profile == target_student:
+            return True
+
+        # 2. Allow if the user is a parent of the student.
+        if hasattr(user, 'parent_profile'):
+            return user.parent_profile.children.filter(id=target_student.id).exists()
+
         return False
