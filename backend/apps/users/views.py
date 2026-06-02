@@ -99,6 +99,78 @@ class AuthViewSet(viewsets.ViewSet):
         """Get current user info."""
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def register(self, request):
+        """Register a new user."""
+        data = request.data.copy()
+        
+        # Validate required fields
+        required_fields = ['email', 'password', 'first_name', 'last_name']
+        for field in required_fields:
+            if not data.get(field):
+                return Response(
+                    {'detail': f'{field} is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Check if email already exists
+        if User.objects.filter(email=data['email']).exists():
+            return Response(
+                {'detail': 'User with this email already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create user
+        try:
+            user_role = data.get('role', 'student')
+            
+            user = User.objects.create_user(
+                email=data['email'],
+                password=data['password'],
+                first_name=data.get('first_name', ''),
+                last_name=data.get('last_name', ''),
+                phone=data.get('phone', ''),
+                role=user_role,
+                is_active=True
+            )
+            
+            # Create empty profile
+            from .models import UserProfile
+            UserProfile.objects.create(user=user)
+            
+            # Create role-specific profile
+            if user_role == 'teacher':
+                from apps.teachers.models import Teacher
+                Teacher.objects.create(
+                    user=user,
+                    employee_id=f"TCH{user.id:05d}",
+                    specialization='عمومی',
+                    employment_status='active'
+                )
+            elif user_role == 'student':
+                from apps.students.models import Student
+                Student.objects.create(
+                    user=user,
+                    student_code=f"STD{user.id:05d}",
+                    grade_level='۱',
+                    status='active'
+                )
+            
+            # Generate tokens
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': UserSerializer(user).data,
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class UserViewSet(viewsets.ModelViewSet):

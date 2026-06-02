@@ -208,6 +208,82 @@ class StudentDocument(BaseModel):
         verbose_name = _('Student Document')
         verbose_name_plural = _('Student Documents')
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return f"{self.title} - {self.student.student_code}"
+
+
+class StudentEnrollment(BaseModel):
+    """
+    Links students to academic years and their classes.
+    A student can have different enrollments for different years.
+    """
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name='enrollments',
+        verbose_name=_('Student')
+    )
+
+    academic_year = models.ForeignKey(
+        'schools.AcademicYear',
+        on_delete=models.CASCADE,
+        related_name='enrollments',
+        verbose_name=_('Academic Year')
+    )
+
+    # Class assignment for this year
+    class_assigned = models.ForeignKey(
+        'classes.Class',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='enrollments',
+        verbose_name=_('Assigned Class')
+    )
+
+    # Status for this year
+    STATUS_ACTIVE = 'active'
+    STATUS_GRADUATED = 'graduated'
+    STATUS_TRANSFERRED = 'transferred'
+    STATUS_DROPPED = 'dropped'
+
+    STATUS_CHOICES = [
+        (STATUS_ACTIVE, _('Active')),
+        (STATUS_GRADUATED, _('Graduated')),
+        (STATUS_TRANSFERRED, _('Transferred')),
+        (STATUS_DROPPED, _('Dropped')),
+    ]
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_ACTIVE,
+        verbose_name=_('Status')
+    )
+
+    # Additional info
+    enrollment_date = models.DateField(
+        auto_now_add=True,
+        verbose_name=_('Enrollment Date')
+    )
+
+    # Track if this is a rollover from previous year
+    is_rollover = models.BooleanField(
+        default=False,
+        verbose_name=_('Rollover from Previous Year'),
+        help_text=_('Automatically enrolled from previous year')
+    )
+
+    class Meta:
+        verbose_name = _('Student Enrollment')
+        verbose_name_plural = _('Student Enrollments')
+        unique_together = ['student', 'academic_year']
+        ordering = ['-academic_year__start_date']
+        indexes = [
+            models.Index(fields=['student', 'academic_year']),
+            models.Index(fields=['class_assigned', 'status']),
+        ]
+
+    def __str__(self):
+        return f"{self.student.student_code} - {self.academic_year.name}"

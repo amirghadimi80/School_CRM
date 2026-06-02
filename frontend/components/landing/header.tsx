@@ -8,6 +8,17 @@ import Link from 'next/link';
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    e.preventDefault();
+    const href = e.currentTarget.href;
+    const targetId = href.replace(/.*#/, "");
+    const elem = document.getElementById(targetId);
+    elem?.scrollIntoView({
+      behavior: 'smooth',
+    });
+    setIsMobileMenuOpen(false);
+  };
+
   const navigation = [
     { name: 'ویژگی‌ها', href: '#features' },
     { name: 'قیمت‌گذاری', href: '#pricing' },
@@ -37,6 +48,7 @@ export function Header() {
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={handleScroll}
                 className="text-gray-700 hover:text-green-600 font-medium transition-colors"
               >
                 {item.name}
@@ -52,7 +64,7 @@ export function Header() {
               className="border-green-600 text-green-600 hover:bg-green-50"
               asChild
             >
-              <Link href="#demo">
+              <Link href="#demo" onClick={handleScroll}>
                 مشاهده دمو
               </Link>
             </Button>
@@ -89,7 +101,7 @@ export function Header() {
                   key={item.name}
                   href={item.href}
                   className="text-gray-700 hover:text-green-600 font-medium transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={handleScroll}
                 >
                   {item.name}
                 </Link>
@@ -101,7 +113,7 @@ export function Header() {
                 className="border-green-600 text-green-600 hover:bg-green-50 w-full"
                 asChild
               >
-                <Link href="#demo" onClick={() => setIsMobileMenuOpen(false)}>
+                <Link href="#demo" onClick={handleScroll}>
                   مشاهده دمو
                 </Link>
               </Button>

@@ -3,7 +3,7 @@ Student serializers.
 """
 from rest_framework import serializers
 from apps.users.serializers import UserSerializer, UserProfileSerializer
-from .models import Student, StudentDocument
+from .models import Student, StudentDocument, StudentEnrollment
 
 
 class StudentDocumentSerializer(serializers.ModelSerializer):
@@ -160,3 +160,24 @@ class StudentBulkUploadSerializer(serializers.Serializer):
     )
     grade_level = serializers.CharField(required=False)
     send_welcome_email = serializers.BooleanField(default=False)
+
+
+class StudentEnrollmentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for StudentEnrollment model.
+    """
+    student_name = serializers.CharField(source='student.user.get_full_name', read_only=True)
+    student_code = serializers.CharField(source='student.student_code', read_only=True)
+    academic_year_name = serializers.CharField(source='academic_year.name', read_only=True)
+    class_name = serializers.CharField(source='class_assigned.name', read_only=True)
+    
+    class Meta:
+        model = StudentEnrollment
+        fields = [
+            'id', 'student', 'student_name', 'student_code',
+            'academic_year', 'academic_year_name',
+            'class_assigned', 'class_name',
+            'status', 'enrollment_date', 'is_rollover',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'enrollment_date', 'created_at', 'updated_at']

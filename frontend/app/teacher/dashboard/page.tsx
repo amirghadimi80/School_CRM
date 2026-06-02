@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { TeacherLayout } from '@/components/layout/teacher-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import {
   Calendar,
@@ -64,8 +63,20 @@ export default function TeacherDashboardPage() {
 
   const loadDashboard = async () => {
     try {
-      const response = await api.get<TeacherDashboardData>('/users/teacher/dashboard/dashboard/');
-      setData(response.data);
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/v1/auth/teacher/dashboard/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load dashboard data');
+      }
+
+      const data = await response.json();
+      setData(data);
     } catch (error) {
       toast({
         title: 'خطا',

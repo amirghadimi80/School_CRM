@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ElementType } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,15 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Settings, School, Bell, Shield, Clock, Calendar, Users, Wallet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { School, Wallet, Clock, Bell, Shield } from 'lucide-react';
 
 const EDUCATION_LEVELS = [
   { value: 'elementary', label: 'ابتدایی (پایه ۱ تا ۶)' },
@@ -43,7 +37,7 @@ const GRADES_BY_LEVEL: Record<string, string[]> = {
 
 type TabType = 'school' | 'financial' | 'scheduling' | 'notifications' | 'security';
 
-const TABS: { id: TabType; label: string; icon: React.ElementType }[] = [
+const TABS: { id: TabType; label: string; icon: ElementType }[] = [
   { id: 'school', label: 'اطلاعات مدرسه', icon: School },
   { id: 'financial', label: 'تنظیمات مالی', icon: Wallet },
   { id: 'scheduling', label: 'تنظیمات زمانی', icon: Clock },
@@ -91,7 +85,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const grades = GRADES_BY_LEVEL[settings.educationLevel] || [];
     const newFees: Record<string, string> = {};
-    grades.forEach(g => {
+    grades.forEach((g) => {
       newFees[g] = tuitionFees[g] || '0';
     });
     setTuitionFees(newFees);
@@ -104,7 +98,7 @@ export default function SettingsPage() {
   const handleWorkingDayToggle = (day: string) => {
     const current = settings.workingDays;
     if (current.includes(day)) {
-      setSettings({ ...settings, workingDays: current.filter(d => d !== day) });
+      setSettings({ ...settings, workingDays: current.filter((d) => d !== day) });
     } else {
       setSettings({ ...settings, workingDays: [...current, day] });
     }
@@ -113,9 +107,19 @@ export default function SettingsPage() {
   const workingDayLabels = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه'];
   const currentGrades = GRADES_BY_LEVEL[settings.educationLevel] || [];
 
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6" dir="rtl">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">تنظیمات پایه</h1>
           <Button onClick={handleSave}>ذخیره تغییرات</Button>
@@ -123,7 +127,7 @@ export default function SettingsPage() {
 
         {/* Tab Buttons */}
         <div className="flex flex-wrap gap-2">
-          {TABS.map(tab => {
+          {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
               <Button
@@ -152,23 +156,44 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="schoolName">نام مدرسه</Label>
-                  <Input id="schoolName" value={settings.schoolName} onChange={(e) => setSettings({ ...settings, schoolName: e.target.value })} />
+                  <Input
+                    id="schoolName"
+                    value={settings.schoolName}
+                    onChange={(e) => setSettings({ ...settings, schoolName: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="principalName">نام مدیر</Label>
-                  <Input id="principalName" value={settings.principalName} onChange={(e) => setSettings({ ...settings, principalName: e.target.value })} />
+                  <Input
+                    id="principalName"
+                    value={settings.principalName}
+                    onChange={(e) => setSettings({ ...settings, principalName: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">تلفن</Label>
-                  <Input id="phone" value={settings.phone} onChange={(e) => setSettings({ ...settings, phone: e.target.value })} />
+                  <Input
+                    id="phone"
+                    value={settings.phone}
+                    onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">ایمیل</Label>
-                  <Input id="email" type="email" value={settings.email} onChange={(e) => setSettings({ ...settings, email: e.target.value })} />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={settings.email}
+                    onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="address">آدرس</Label>
-                  <Input id="address" value={settings.address} onChange={(e) => setSettings({ ...settings, address: e.target.value })} />
+                  <Input
+                    id="address"
+                    value={settings.address}
+                    onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -180,26 +205,38 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>مقطع</Label>
-                  <Select value={settings.educationLevel} onValueChange={(value) => setSettings({ ...settings, educationLevel: value })}>
+                  <Select
+                    value={settings.educationLevel}
+                    onValueChange={(value) => setSettings({ ...settings, educationLevel: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="انتخاب کنید" />
                     </SelectTrigger>
                     <SelectContent>
-                      {EDUCATION_LEVELS.map(level => (
-                        <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
+                      {EDUCATION_LEVELS.map((level) => (
+                        <SelectItem key={level.value} value={level.value}>
+                          {level.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="capacity">حداکثر ظرفیت هر کلاس</Label>
-                  <Input id="capacity" type="number" value={settings.maxClassCapacity} onChange={(e) => setSettings({ ...settings, maxClassCapacity: e.target.value })} />
+                  <Input
+                    id="capacity"
+                    type="number"
+                    value={settings.maxClassCapacity}
+                    onChange={(e) => setSettings({ ...settings, maxClassCapacity: e.target.value })}
+                  />
                 </div>
                 <div className="p-3 bg-gray-50 rounded">
                   <p className="text-sm text-muted-foreground">پایه‌های فعال:</p>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {currentGrades.map(g => (
-                      <span key={g} className="px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm">{g}</span>
+                    {currentGrades.map((g) => (
+                      <span key={g} className="px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                        {g}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -222,7 +259,9 @@ export default function SettingsPage() {
                   </div>
                   <div className="text-center p-3 bg-gray-50 rounded">
                     <p className="text-sm text-muted-foreground">مقطع</p>
-                    <p className="font-bold">{EDUCATION_LEVELS.find(l => l.value === settings.educationLevel)?.label}</p>
+                    <p className="font-bold">
+                      {EDUCATION_LEVELS.find((l) => l.value === settings.educationLevel)?.label}
+                    </p>
                   </div>
                   <div className="text-center p-3 bg-gray-50 rounded">
                     <p className="text-sm text-muted-foreground">تعداد پایه</p>
@@ -247,7 +286,7 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {currentGrades.map(grade => (
+                  {currentGrades.map((grade) => (
                     <div key={grade} className="border rounded-lg p-4 space-y-2">
                       <Label className="text-base font-bold">پایه {grade}</Label>
                       <div className="relative">
@@ -296,7 +335,7 @@ export default function SettingsPage() {
                 <CardTitle>خلاصه مالی</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {currentGrades.map(grade => (
+                {currentGrades.map((grade) => (
                   <div key={grade} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                     <span>پایه {grade}</span>
                     <span className="font-bold">{Number(tuitionFees[grade] || 0).toLocaleString()} ت</span>
@@ -306,8 +345,12 @@ export default function SettingsPage() {
                   <span className="font-bold">میانگین شهریه</span>
                   <span className="font-bold text-blue-600">
                     {currentGrades.length > 0
-                      ? Math.round(currentGrades.reduce((sum, g) => sum + Number(tuitionFees[g] || 0), 0) / currentGrades.length).toLocaleString()
-                      : '0'} ت
+                      ? Math.round(
+                          currentGrades.reduce((sum, g) => sum + Number(tuitionFees[g] || 0), 0) /
+                            currentGrades.length,
+                        ).toLocaleString()
+                      : '0'}{' '}
+                    ت
                   </span>
                 </div>
               </CardContent>
@@ -328,33 +371,48 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>تعداد زنگ در روز</Label>
-                  <Select value={settings.periodsPerDay} onValueChange={(value) => setSettings({ ...settings, periodsPerDay: value })}>
+                  <Select
+                    value={settings.periodsPerDay}
+                    onValueChange={(value) => setSettings({ ...settings, periodsPerDay: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="انتخاب کنید" />
                     </SelectTrigger>
                     <SelectContent>
-                      {PERIODS_OPTIONS.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      {PERIODS_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>مدت زمان هر زنگ</Label>
-                  <Select value={settings.periodDuration} onValueChange={(value) => setSettings({ ...settings, periodDuration: value })}>
+                  <Select
+                    value={settings.periodDuration}
+                    onValueChange={(value) => setSettings({ ...settings, periodDuration: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="انتخاب کنید" />
                     </SelectTrigger>
                     <SelectContent>
-                      {DURATION_OPTIONS.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      {DURATION_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="startTime">ساعت شروع مدرسه</Label>
-                  <Input id="startTime" type="time" value={settings.schoolStartTime} onChange={(e) => setSettings({ ...settings, schoolStartTime: e.target.value })} />
+                  <Input
+                    id="startTime"
+                    type="time"
+                    value={settings.schoolStartTime}
+                    onChange={(e) => setSettings({ ...settings, schoolStartTime: e.target.value })}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -442,11 +500,11 @@ export default function SettingsPage() {
                 <CardTitle>درباره سیستم</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="flex justify-between">
+                <div className="flex justify بین">
                   <span className="text-muted-foreground">نسخه</span>
                   <span>1.0.0</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify بین">
                   <span className="text-muted-foreground">تاریخ نصب</span>
                   <span>1403/03/01</span>
                 </div>

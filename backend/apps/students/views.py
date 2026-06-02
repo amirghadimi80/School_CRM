@@ -7,11 +7,12 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from apps.common.permissions import IsSchoolAdmin, IsSchoolMember, IsTeacher, IsOwnerOrAdmin
 from apps.common.middleware.tenant import get_current_tenant
-from .models import Student, StudentDocument
+from .models import Student, StudentDocument, StudentEnrollment
 from .serializers import (
     StudentListSerializer, StudentDetailSerializer,
     StudentCreateSerializer, StudentUpdateSerializer,
-    StudentDocumentSerializer, StudentBulkUploadSerializer
+    StudentDocumentSerializer, StudentBulkUploadSerializer,
+    StudentEnrollmentSerializer
 )
 
 
@@ -149,3 +150,63 @@ class StudentDocumentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         tenant = get_current_tenant()
         serializer.save(school=tenant)
+
+
+class StudentEnrollmentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing student enrollments in academic years.
+    """
+    serializer_class = StudentEnrollmentSerializer
+    permission_classes = [IsSchoolAdmin]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['academic_year', 'status', 'class_assigned']
+    
+    def get_queryset(self):
+        tenant = get_current_tenant()
+        if tenant:
+            return StudentEnrollment.objects.filter(
+                academic_year__school=tenant
+            ).select_related('student', 'academic_year', 'class_assigned')
+        return StudentEnrollment.objects.none()
+    
+    @action(detail=False, methods=['post'])
+    def bulk_assign_class(self, request):
+        """Bulk assign students to a class."""
+        enrollment_ids = request.data.get('enrollment_ids', [])
+        class_id = request.data.get('class_id')
+        
+        if not enrollment_ids or not class_id:
+            return Response(
+                {'detail': 'enrollment_ids and class_id are required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        updated_count = StudentEnrollment.objects.filter(
+            id__in=enrollment_ids
+        ).update(class_assigned_id=class_id)
+        
+        return Response({
+            'status': 'success',
+            'updated_count': updated_count
+        })
+    
+    @action(detail=False, methods=['post'])
+    def bulk_update_status(self, request):
+        """Bulk update enrollment status."""
+        enrollment_ids = request.data.get('enrollment_ids', [])
+        new_status = request.data.get('status')
+        
+        if not enrollment_ids or not new_status:
+            return Response(
+                {'detail': 'enrollment_ids and status are required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        updated_count = StudentEnrollment.objects.filter(
+            id__in=enrollment_ids
+        ).update(status=new_status)
+        
+        return Response({
+            'status': 'success',
+            'updated_count': updated_count
+        })

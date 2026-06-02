@@ -94,6 +94,102 @@ class AcademicYearViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         school = get_current_tenant()
         serializer.save(school=school)
+    
+    @action(detail=True, methods=['post'])
+    def set_current(self, request, pk=None):
+        """Set this academic year as the current year."""
+        academic_year = self.get_object()
+        academic_year.is_current = True
+        academic_year.save()
+        return Response({'status': 'success', 'is_current': True})
+    
+    @action(detail=True, methods=['post'])
+    def copy_classes(self, request, pk=None):
+        """Copy classes from another academic year."""
+        target_year = self.get_object()
+        source_year_id = request.data.get('source_year_id')
+        
+        if not source_year_id:
+            return Response(
+                {'detail': 'source_year_id is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            source_year = AcademicYear.objects.get(id=source_year_id)
+        except AcademicYear.DoesNotExist:
+            return Response(
+                {'detail': 'Source academic year not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Copy classes from source year
+        from apps.classes.models import Class
+        source_classes = Class.objects.filter(academic_year=source_year)
+        
+        copied_count = 0
+        for cls in source_classes:
+            # Create new class for target year
+            Class.objects.create(
+                school=cls.school,
+                name=cls.name,
+                grade_level=cls.grade_level,
+                academic_year=target_year,
+                room_number=cls.room_number,
+                capacity=cls.capacity,
+                homeroom_teacher=cls.homeroom_teacher,
+                schedule={},  # Reset schedule
+                is_active=True,
+            )
+            copied_count += 1
+        
+        return Response({
+            'status': 'success',
+            'copied_count': copied_count
+        })
+    
+    @action(detail=True, methods=['post'])
+    def rollover_students(self, request, pk=None):
+        """Roll over active students from previous year."""
+        target_year = self.get_object()
+        
+        # Find previous year
+        previous_year = AcademicYear.objects.filter(
+            school=target_year.school,
+            end_date__lt=target_year.start_date
+        ).order_by('-end_date').first()
+        
+        if not previous_year:
+            return Response(
+                {'detail': 'No previous academic year found.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get active enrollments from previous year
+        from apps.students.models import StudentEnrollment
+        previous_enrollments = StudentEnrollment.objects.filter(
+            academic_year=previous_year,
+            status=StudentEnrollment.STATUS_ACTIVE
+        )
+        
+        enrolled_count = 0
+        for enrollment in previous_enrollments:
+            # Create new enrollment for target year
+            StudentEnrollment.objects.get_or_create(
+                student=enrollment.student,
+                academic_year=target_year,
+                defaults={
+                    'class_assigned': None,  # Students need to be reassigned
+                    'status': StudentEnrollment.STATUS_ACTIVE,
+                    'is_rollover': True,
+                }
+            )
+            enrolled_count += 1
+        
+        return Response({
+            'status': 'success',
+            'enrolled_count': enrolled_count
+        })
 
 
 class TermViewSet(viewsets.ModelViewSet):

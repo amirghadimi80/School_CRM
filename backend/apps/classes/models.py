@@ -184,10 +184,11 @@ class Class(BaseModel):
     )
     
     # Academic info
-    academic_year = models.CharField(
-        max_length=20,
-        verbose_name=_('Academic Year'),
-        help_text=_('e.g., 1403-1404')
+    academic_year = models.ForeignKey(
+        'schools.AcademicYear',
+        on_delete=models.CASCADE,
+        related_name='classes',
+        verbose_name=_('Academic Year')
     )
     
     # Schedule (JSON for flexibility)
@@ -214,10 +215,10 @@ class Class(BaseModel):
         verbose_name = _('Class')
         verbose_name_plural = _('Classes')
         ordering = ['grade_level', 'name']
-        unique_together = ['school', 'name', 'academic_year']
+        unique_together = ['academic_year', 'name']
         indexes = [
-            models.Index(fields=['school', 'grade_level']),
-            models.Index(fields=['school', 'is_active']),
+            models.Index(fields=['academic_year', 'grade_level']),
+            models.Index(fields=['academic_year', 'is_active']),
             models.Index(fields=['homeroom_teacher']),
         ]
     

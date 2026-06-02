@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,19 +23,32 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await api.login(email, password);
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'ایمیل یا رمز عبور اشتباه است');
+      }
+
+      const data = await response.json();
       
       // Store tokens
-      localStorage.setItem('access_token', response.access);
-      localStorage.setItem('refresh_token', response.refresh);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('access_token', data.access);
+      localStorage.setItem('refresh_token', data.refresh);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
-      if (response.user.school) {
-        localStorage.setItem('school_id', response.user.school.id);
+      if (data.user?.school) {
+        localStorage.setItem('school_id', data.user.school.id);
       }
 
       // Redirect based on role
-      const role = response.user.role;
+      const role = data.user.role;
       if (role === 'teacher') {
         router.push('/teacher/dashboard');
       } else if (role === 'student') {

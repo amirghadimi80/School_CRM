@@ -7,8 +7,8 @@ from .views import AuthViewSet, UserViewSet
 from .teacher_views import TeacherDashboardViewSet
 from .student_views import StudentDashboardViewSet
 
-router = DefaultRouter()
-router.register(r'auth', AuthViewSet, basename='auth')
+router = DefaultRouter(trailing_slash=False)
+router.register(r'', AuthViewSet, basename='auth')
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'teacher/dashboard', TeacherDashboardViewSet, basename='teacher-dashboard')
 router.register(r'student/dashboard', StudentDashboardViewSet, basename='student-dashboard')
