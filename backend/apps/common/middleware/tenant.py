@@ -45,10 +45,10 @@ class TenantMiddleware:
         
         # Try header first
         tenant_id = request.headers.get('X-Tenant-ID')
-        if tenant_id:
+        if tenant_id and tenant_id not in ('null', 'undefined'):
             try:
                 tenant = School.objects.get(id=tenant_id, is_active=True)
-            except School.DoesNotExist:
+            except (School.DoesNotExist, ValueError, TypeError):
                 pass
         
         # Try subdomain

@@ -5,6 +5,7 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy as _
 from apps.common.permissions import IsSuperAdmin, IsSchoolAdmin, IsSchoolMember
 from apps.common.middleware.tenant import get_current_tenant
 from .models import (
@@ -81,6 +82,11 @@ class SchoolViewSet(viewsets.ModelViewSet):
 class AcademicYearViewSet(viewsets.ModelViewSet):
     """
     ViewSet for AcademicYear management.
+
+    Academic years are defined and managed by super admins through the Django
+    admin panel. School admins can only list the years that are made visible to
+    them and choose which one is current (``set_current``). Creating, editing or
+    deleting years through the API is therefore disabled.
     """
     serializer_class = AcademicYearSerializer
     permission_classes = [IsSchoolAdmin]
@@ -88,17 +94,39 @@ class AcademicYearViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         school = get_current_tenant()
         if school:
-            return AcademicYear.objects.filter(school=school)
+            return AcademicYear.objects.filter(school=school, is_visible=True)
         return AcademicYear.objects.none()
-    
-    def perform_create(self, serializer):
-        school = get_current_tenant()
-        serializer.save(school=school)
+
+    def create(self, request, *args, **kwargs):
+        return Response(
+            {'detail': _('Academic years are managed by the system administrator.')},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+
+    def update(self, request, *args, **kwargs):
+        return Response(
+            {'detail': _('Academic years are managed by the system administrator.')},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        return Response(
+            {'detail': _('Academic years are managed by the system administrator.')},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
     
     @action(detail=True, methods=['post'])
     def set_current(self, request, pk=None):
         """Set this academic year as the current year."""
         academic_year = self.get_object()
+        if not academic_year.is_active:
+            return Response(
+                {'detail': _('This academic year is inactive and cannot be selected.')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         academic_year.is_current = True
         academic_year.save()
         return Response({'status': 'success', 'is_current': True})

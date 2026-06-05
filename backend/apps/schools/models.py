@@ -185,6 +185,11 @@ class AcademicYear(models.Model):
     end_date = models.DateField(verbose_name=_('End Date'))
     is_current = models.BooleanField(default=False, verbose_name=_('Is Current'))
     is_active = models.BooleanField(default=True, verbose_name=_('Is Active'))
+    is_visible = models.BooleanField(
+        default=True,
+        verbose_name=_('Show in Managers Panel'),
+        help_text=_('Whether this year is shown to school admins for selection.')
+    )
     
     class Meta:
         verbose_name = _('Academic Year')
