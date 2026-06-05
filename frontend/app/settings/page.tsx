@@ -127,10 +127,10 @@ export default function SettingsPage() {
 
   const authHeaders = (extra?: Record<string, string>) => {
     const token = localStorage.getItem('access_token');
-    const schoolId = localStorage.getItem('school_id');
+    const schoolId = localStorage.getItem('school_id') || '1'; // Default to school ID 1 if not set
     return {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(schoolId ? { 'X-Tenant-ID': schoolId } : {}),
+      'X-Tenant-ID': schoolId,
       ...extra,
     } as Record<string, string>;
   };

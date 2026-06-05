@@ -1,0 +1,20 @@
+School ID: 1
+School: دبیرستان نمونه
+Total courses: 0
+
+Users:
+Total users: 5
+  - amir@gmail.com (Role: super_admin, Active: True, Superuser: True)
+  - student@test.com (Role: student, Active: True, Superuser: False)
+  - teacher@test.com (Role: teacher, Active: True, Superuser: False)
+  - a.h.ghadimy@gmail.com (Role: super_admin, Active: True, Superuser: True)
+  - AnonymousUser (Role: student, Active: True, Superuser: False)
+
+Academic Years:
+Total academic years: 1
+  - 1403-1404 (2024-03-21 to 2025-03-20) - Active: True, Current: True, Visible: True
+
+
+Sample courses:
+
+Courses by category:
