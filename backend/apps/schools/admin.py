@@ -47,10 +47,12 @@ class SchoolAdmin(admin.ModelAdmin):
 
 @admin.register(AcademicYear)
 class AcademicYearAdmin(admin.ModelAdmin):
-    list_display = ['name', 'school', 'start_date', 'end_date', 'is_current', 'is_active']
-    list_filter = ['is_current', 'is_active', 'school']
+    list_display = ['name', 'school', 'start_date', 'end_date', 'is_current', 'is_active', 'is_visible']
+    list_editable = ['is_active', 'is_visible']
+    list_filter = ['is_current', 'is_active', 'is_visible', 'school']
     search_fields = ['name', 'school__name']
     date_hierarchy = 'start_date'
+    fields = ['school', 'name', 'start_date', 'end_date', 'is_current', 'is_active', 'is_visible']
 
 
 @admin.register(Term)

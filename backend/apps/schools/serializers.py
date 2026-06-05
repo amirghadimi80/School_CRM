@@ -62,9 +62,14 @@ class AcademicYearSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'school', 'school_name', 'name',
             'start_date', 'end_date',
-            'is_current', 'is_active',
+            'is_current', 'is_active', 'is_visible',
         ]
-        read_only_fields = ['id']
+        # Academic years are defined by super admins via the Django admin.
+        # School admins may only read them and pick the current one.
+        read_only_fields = [
+            'id', 'school', 'name', 'start_date', 'end_date',
+            'is_active', 'is_visible',
+        ]
 
 
 class TermSerializer(serializers.ModelSerializer):

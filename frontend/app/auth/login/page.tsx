@@ -43,8 +43,14 @@ export default function LoginPage() {
       localStorage.setItem('refresh_token', data.refresh);
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      if (data.user?.school) {
-        localStorage.setItem('school_id', data.user.school.id);
+      // The API returns `school` as the school id; older payloads may nest it
+      // as an object, so support both shapes.
+      const schoolId =
+        typeof data.user?.school === 'object'
+          ? data.user?.school?.id
+          : data.user?.school;
+      if (schoolId !== undefined && schoolId !== null) {
+        localStorage.setItem('school_id', String(schoolId));
       }
 
       // Redirect based on role
