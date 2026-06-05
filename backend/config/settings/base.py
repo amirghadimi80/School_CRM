@@ -4,6 +4,7 @@ Base settings for School CRM/ERP SaaS Platform.
 import os
 from datetime import timedelta
 from pathlib import Path
+from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -176,6 +177,11 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+    'x-tenant-id',
+]
 
 CHANNEL_LAYERS = {
     'default': {
