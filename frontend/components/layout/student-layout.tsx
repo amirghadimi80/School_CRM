@@ -14,7 +14,6 @@ import {
   User,
   LogOut,
   Menu,
-  GraduationCap,
 } from 'lucide-react';
 
 const sidebarItems = [
@@ -65,9 +64,7 @@ export function StudentLayout({ children }: StudentLayoutProps) {
       <aside className="hidden lg:flex flex-col w-64 bg-white border-l border-gray-200 fixed right-0 top-0 bottom-0 z-40">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <GraduationCap className="h-6 w-6 text-green-600" />
-            </div>
+            <img src="/images/logo.png" alt="سپاد" className="h-10 w-10 object-contain" />
             <div>
               <h1 className="font-bold text-lg">پنل دانش‌آموز</h1>
               <p className="text-xs text-gray-500">{studentName}</p>
@@ -112,7 +109,7 @@ export function StudentLayout({ children }: StudentLayoutProps) {
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-green-600" />
+            <img src="/images/logo.png" alt="سپاد" className="h-8 w-8 object-contain" />
             <span className="font-bold">پنل دانش‌آموز</span>
           </div>
           <Button

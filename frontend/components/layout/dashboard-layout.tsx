@@ -9,7 +9,6 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   LayoutDashboard,
   Users,
-  GraduationCap,
   BookOpen,
   Calendar,
   Wallet,
@@ -61,9 +60,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Logo */}
           <div className="flex h-16 items-center border-b px-6">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <GraduationCap className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <img src="/images/logo.png" alt="سپاد" className="h-8 w-8 object-contain" />
               <span className="text-lg font-bold">مدرسه‌یار</span>
             </Link>
           </div>
@@ -117,6 +114,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <SheetContent side="right" className="w-64 p-0">
             <div className="flex h-full flex-col">
               <div className="flex h-16 items-center border-b px-6">
+                <img src="/images/logo.png" alt="سپاد" className="h-8 w-8 object-contain" />
                 <span className="text-lg font-bold">مدرسه‌یار</span>
               </div>
               <nav className="flex-1 space-y-1 p-4">
@@ -156,8 +154,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </SheetContent>
         </Sheet>
 
-        <Link href="/dashboard" className="text-lg font-bold">
-          مدرسه‌یار
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <img src="/images/logo.png" alt="سپاد" className="h-8 w-8 object-contain" />
+          <span className="text-lg font-bold">مدرسه‌یار</span>
         </Link>
 
         <Button variant="ghost" size="icon">

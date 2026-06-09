@@ -33,9 +33,7 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-lg font-bold">س</span>
-            </div>
+            <img src="/images/logo.png" alt="سپاد" className="h-10 w-10 object-contain" />
             <div>
               <h1 className="text-xl font-bold text-gray-900">سپاد</h1>
               <p className="text-xs text-gray-600">سامانه مدیریت مدرسه</p>
