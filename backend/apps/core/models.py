@@ -38,12 +38,22 @@ class TenantModel(TimestampModel):
         ]
     
     def save(self, *args, **kwargs):
-        # Auto-assign tenant if not set
-        if not self.school_id:
+        # Auto-assign tenant if not set. Some subclasses override ``school`` as
+        # a derived property (e.g. ``self.class_assigned.school``); those have
+        # no concrete ``school`` column, so skip the auto-assignment for them.
+        if self._has_concrete_school_field() and not self.school_id:
             current_tenant = get_current_tenant()
             if current_tenant:
                 self.school = current_tenant
         super().save(*args, **kwargs)
+
+    @classmethod
+    def _has_concrete_school_field(cls):
+        try:
+            field = cls._meta.get_field('school')
+        except Exception:
+            return False
+        return getattr(field, 'concrete', False)
 
 
 class SoftDeleteModel(models.Model):
