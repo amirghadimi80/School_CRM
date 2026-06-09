@@ -61,10 +61,28 @@ class TenantMiddleware:
                 except School.DoesNotExist:
                     pass
         
-        # Try user's school for authenticated requests
+        # Try user's school for authenticated requests (session auth)
         if not tenant and request.user and request.user.is_authenticated:
             if hasattr(request.user, 'school') and request.user.school:
                 tenant = request.user.school if request.user.school.is_active else None
+        
+        # Try resolving user from JWT token (DRF JWT auth runs at view
+        # level, so request.user is still anonymous here for API calls)
+        if not tenant:
+            auth_header = request.headers.get('Authorization', '')
+            if auth_header.startswith('Bearer '):
+                try:
+                    from rest_framework_simplejwt.tokens import AccessToken
+                    from apps.users.models import User
+                    token_str = auth_header.split(' ', 1)[1]
+                    access_token = AccessToken(token_str)
+                    user = User.objects.select_related('school').get(
+                        id=access_token['user_id']
+                    )
+                    if hasattr(user, 'school') and user.school and user.school.is_active:
+                        tenant = user.school
+                except Exception:
+                    pass
         
         # Set default tenant if none found (for super admin or public endpoints)
         if not tenant and request.path.startswith('/api/v1/auth/'):
