@@ -5,9 +5,10 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
+from django.db import models
 
 from apps.common.permissions import IsStudent
-from apps.classes.models import ClassSchedule
+from apps.schools.models import GeneratedSchedule
 from apps.attendance.models import Attendance
 from apps.grades.models import Grade
 from apps.finance.models import Invoice, Payment
@@ -27,11 +28,11 @@ class StudentDashboardViewSet(viewsets.ViewSet):
         
         # Today's schedule
         if student.current_class:
-            today_schedules = ClassSchedule.objects.filter(
+            today_schedules = GeneratedSchedule.objects.filter(
                 class_assigned=student.current_class,
                 day_of_week=today.weekday(),
                 is_active=True
-            ).select_related('course', 'teacher').order_by('period')
+            ).select_related('course', 'teacher', 'period').order_by('period__period_number')
         else:
             today_schedules = []
         
@@ -39,11 +40,11 @@ class StudentDashboardViewSet(viewsets.ViewSet):
         for item in today_schedules:
             schedule_data.append({
                 'id': item.id,
-                'period': item.period,
+                'period': item.period.period_number,
                 'course': item.course.name,
                 'teacher': item.teacher.full_name if item.teacher else 'N/A',
-                'start_time': item.start_time.strftime('%H:%M') if item.start_time else None,
-                'end_time': item.end_time.strftime('%H:%M') if item.end_time else None,
+                'start_time': item.period.start_time.strftime('%H:%M') if item.period.start_time else None,
+                'end_time': item.period.end_time.strftime('%H:%M') if item.period.end_time else None,
             })
         
         # GPA
@@ -104,10 +105,10 @@ class StudentDashboardViewSet(viewsets.ViewSet):
         if not student.current_class:
             return Response({'schedule': [], 'message': 'Not assigned to any class'})
         
-        schedules = ClassSchedule.objects.filter(
+        schedules = GeneratedSchedule.objects.filter(
             class_assigned=student.current_class,
             is_active=True
-        ).select_related('course', 'teacher').order_by('day_of_week', 'period')
+        ).select_related('course', 'teacher', 'period').order_by('day_of_week', 'period__period_number')
         
         # Group by day
         days = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه']
@@ -117,13 +118,13 @@ class StudentDashboardViewSet(viewsets.ViewSet):
             day_name = days[item.day_of_week] if item.day_of_week < 7 else 'other'
             weekly_schedule[day_name].append({
                 'id': item.id,
-                'period': item.period,
+                'period': item.period.period_number,
                 'course': item.course.name,
                 'course_id': item.course.id,
                 'teacher': item.teacher.full_name if item.teacher else 'N/A',
                 'teacher_id': item.teacher.id if item.teacher else None,
-                'start_time': item.start_time.strftime('%H:%M') if item.start_time else None,
-                'end_time': item.end_time.strftime('%H:%M') if item.end_time else None,
+                'start_time': item.period.start_time.strftime('%H:%M') if item.period.start_time else None,
+                'end_time': item.period.end_time.strftime('%H:%M') if item.period.end_time else None,
             })
         
         return Response({

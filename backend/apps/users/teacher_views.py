@@ -9,7 +9,7 @@ from datetime import timedelta
 
 from apps.common.permissions import IsTeacher
 from apps.teachers.models import TeacherAssignment
-from apps.classes.models import ClassSchedule
+from apps.schools.models import GeneratedSchedule
 from apps.attendance.models import Attendance
 from apps.grades.models import Grade
 
@@ -27,11 +27,11 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         today = timezone.now().date()
         
         # Today's classes from schedule
-        today_classes = ClassSchedule.objects.filter(
+        today_classes = GeneratedSchedule.objects.filter(
             teacher=teacher,
             day_of_week=today.weekday(),
             is_active=True
-        ).select_related('course', 'class_assigned').order_by('period')
+        ).select_related('course', 'class_assigned', 'period').order_by('period__period_number')
         
         # Get unique classes for this teacher
         teacher_assignments = TeacherAssignment.objects.filter(
@@ -58,17 +58,17 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
             student_count = item.class_assigned.students.filter(status='active').count()
             schedule_data.append({
                 'id': item.id,
-                'period': item.period,
+                'period': item.period.period_number,
                 'course': item.course.name,
                 'class_name': item.class_assigned.name,
                 'class_id': item.class_assigned.id,
                 'student_count': student_count,
-                'start_time': item.start_time.strftime('%H:%M') if item.start_time else None,
-                'end_time': item.end_time.strftime('%H:%M') if item.end_time else None,
+                'start_time': item.period.start_time.strftime('%H:%M') if item.period.start_time else None,
+                'end_time': item.period.end_time.strftime('%H:%M') if item.period.end_time else None,
             })
         
         # Weekly schedule summary
-        weekly_schedule = ClassSchedule.objects.filter(
+        weekly_schedule = GeneratedSchedule.objects.filter(
             teacher=teacher,
             is_active=True
         ).values('day_of_week').distinct().count()
@@ -92,10 +92,10 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         """Get teacher's weekly schedule."""
         teacher = request.user.teacher_profile
         
-        schedules = ClassSchedule.objects.filter(
+        schedules = GeneratedSchedule.objects.filter(
             teacher=teacher,
             is_active=True
-        ).select_related('course', 'class_assigned').order_by('day_of_week', 'period')
+        ).select_related('course', 'class_assigned', 'period').order_by('day_of_week', 'period__period_number')
         
         # Group by day
         days = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه']
@@ -105,12 +105,12 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
             day_name = days[item.day_of_week] if item.day_of_week < 7 else ' other'
             weekly_schedule[day_name].append({
                 'id': item.id,
-                'period': item.period,
+                'period': item.period.period_number,
                 'course': item.course.name,
                 'class_name': item.class_assigned.name,
                 'class_id': item.class_assigned.id,
-                'start_time': item.start_time.strftime('%H:%M') if item.start_time else None,
-                'end_time': item.end_time.strftime('%H:%M') if item.end_time else None,
+                'start_time': item.period.start_time.strftime('%H:%M') if item.period.start_time else None,
+                'end_time': item.period.end_time.strftime('%H:%M') if item.period.end_time else None,
             })
         
         return Response({
