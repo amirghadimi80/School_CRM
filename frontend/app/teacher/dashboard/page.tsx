@@ -64,11 +64,16 @@ export default function TeacherDashboardPage() {
   const loadDashboard = async () => {
     try {
       const token = localStorage.getItem('access_token');
+      const schoolId = localStorage.getItem('school_id');
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+      if (schoolId) {
+        headers['X-Tenant-ID'] = schoolId;
+      }
       const response = await fetch('/api/v1/auth/teacher/dashboard/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {
