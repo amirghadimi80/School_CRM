@@ -14,7 +14,6 @@ import {
   User,
   LogOut,
   Menu,
-  GraduationCap,
   Clock,
   HelpCircle,
 } from 'lucide-react';
@@ -69,9 +68,7 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
         <Link href="/teacher/dashboard" className="block">
         <div className="p-6 border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <GraduationCap className="h-6 w-6 text-blue-600" />
-            </div>
+            <img src="/images/logo.png" alt="سپاد" className="h-10 w-10 object-contain" />
             <div>
               <h1 className="font-bold text-lg">پنل معلم</h1>
               <p className="text-xs text-gray-500">{teacherName}</p>
@@ -117,7 +114,7 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <GraduationCap className="h-6 w-6 text-blue-600" />
+            <img src="/images/logo.png" alt="سپاد" className="h-8 w-8 object-contain" />
             <span className="font-bold">پنل معلم</span>
           </div>
           <Button
