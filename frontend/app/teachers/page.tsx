@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GraduationCap, Plus, Search, Eye, Phone, Mail, BookOpen, Clock, ChevronDown, UserCircle, Pencil, Trash2 } from 'lucide-react';
+import { GraduationCap, Plus, Search, Eye, Phone, Mail, BookOpen, Clock, ChevronDown, UserCircle, Pencil, Trash2, FileDown } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import api from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -36,15 +37,11 @@ import {
 
 interface Teacher {
   id: number;
-  firstName: string;
-  lastName: string;
-  employeeId: string;
+  full_name: string;
+  employee_id: string;
   specialization: string;
   status: string;
-  phone?: string;
   email?: string;
-  degree?: string;
-  experience?: number;
 }
 
 const SPECIALIZATIONS = ['ریاضی', 'فیزیک', 'شیمی', 'زیست‌شناسی', 'ادبیات فارسی', 'عربی', 'تاریخ', 'جغرافیا', 'انگلیسی', 'ورزش'];
@@ -57,9 +54,7 @@ export default function TeachersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
-  const [editTeacher, setEditTeacher] = useState<Teacher | null>(null);
 
   const [newTeacher, setNewTeacher] = useState({
     firstName: '',
@@ -68,9 +63,18 @@ export default function TeachersPage() {
     specialization: '',
     phone: '',
     email: '',
-    degree: '',
-    experience: '',
+    password: '',
   });
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [academicYear, setAcademicYear] = useState('');
+
+  const loadTeachers = async () => {
+    const teachersRes = await api.getTeachers({ status: 'active' });
+    const list = Array.isArray(teachersRes) ? teachersRes : teachersRes.results || [];
+    setTeachers(list);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -79,36 +83,84 @@ export default function TeachersPage() {
       return;
     }
 
-    setTeachers([
-      { id: 1, firstName: 'علی', lastName: 'کریمی', employeeId: 'TCH001', specialization: 'ریاضی', status: 'active', phone: '09123456789', email: 'karimi@example.com', degree: 'کارشناسی ارشد', experience: 10 },
-      { id: 2, firstName: 'سارا', lastName: 'نوری', employeeId: 'TCH002', specialization: 'فیزیک', status: 'active', phone: '09129876543', email: 'nouri@example.com', degree: 'دکتری', experience: 8 },
-    ]);
-    setIsLoading(false);
-  }, [router]);
+    const load = async () => {
+      try {
+        await loadTeachers();
+      } catch {
+        toast({ title: 'خطا', description: 'بارگذاری معلمان ناموفق بود', variant: 'destructive' });
+      }
 
-  const filteredTeachers = teachers.filter(t => 
-    t.firstName.includes(searchQuery) || 
-    t.lastName.includes(searchQuery) || 
-    t.employeeId.includes(searchQuery)
+      try {
+        const schoolRes = await api.getMySchool();
+        setAcademicYear(schoolRes.current_academic_year || '');
+      } catch {
+        // سال تحصیلی اختیاری است
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, [router, toast]);
+
+  const filteredTeachers = teachers.filter(t =>
+    t.full_name.includes(searchQuery) ||
+    t.employee_id.includes(searchQuery) ||
+    t.specialization.includes(searchQuery)
   );
 
-  const handleAddTeacher = () => {
-    if (!newTeacher.firstName || !newTeacher.lastName || !newTeacher.employeeId) {
-      toast({ title: 'خطا', description: 'لطفاً نام، نام خانوادگی و کد پرسنلی را وارد کنید', variant: 'destructive' });
+  const handleDownloadGradebook = async (teacher: Teacher) => {
+    try {
+      const blob = await api.downloadTeacherGradebook(teacher.id, academicYear || undefined);
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `gradebook_${teacher.employee_id}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      toast({ title: 'موفق', description: 'دفتر کلاسی دانلود شد' });
+    } catch {
+      toast({ title: 'خطا', description: 'دانلود دفتر کلاسی ناموفق بود', variant: 'destructive' });
+    }
+  };
+
+  const handleAddTeacher = async () => {
+    if (!newTeacher.firstName || !newTeacher.lastName || !newTeacher.email || !newTeacher.password) {
+      toast({ title: 'خطا', description: 'نام، نام خانوادگی، ایمیل و رمز عبور الزامی است', variant: 'destructive' });
+      return;
+    }
+    if (!newTeacher.employeeId) {
+      toast({ title: 'خطا', description: 'کد پرسنلی الزامی است', variant: 'destructive' });
       return;
     }
 
-    const teacher: Teacher = {
-      id: teachers.length + 1,
-      ...newTeacher,
-      experience: Number(newTeacher.experience) || 0,
-      status: 'active',
-    };
-
-    setTeachers([...teachers, teacher]);
-    setIsAddDialogOpen(false);
-    setNewTeacher({ firstName: '', lastName: '', employeeId: '', specialization: '', phone: '', email: '', degree: '', experience: '' });
-    toast({ title: 'موفق', description: 'معلم با موفقیت اضافه شد' });
+    setIsSaving(true);
+    try {
+      const created = await api.createTeacher({
+        first_name: newTeacher.firstName,
+        last_name: newTeacher.lastName,
+        email: newTeacher.email,
+        phone: newTeacher.phone,
+        password: newTeacher.password,
+        employee_id: newTeacher.employeeId,
+        specialization: newTeacher.specialization,
+      });
+      setTeachers((prev) => [...prev, created]);
+      setIsAddDialogOpen(false);
+      setNewTeacher({
+        firstName: '', lastName: '', employeeId: '', specialization: '',
+        phone: '', email: '', password: '',
+      });
+      toast({ title: 'موفق', description: 'معلم با موفقیت اضافه شد' });
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: Record<string, string[] | string> } })?.response?.data;
+      const msg = typeof data?.email === 'object' ? data.email[0]
+        : typeof data?.employee_id === 'object' ? data.employee_id[0]
+        : typeof data?.detail === 'string' ? data.detail
+        : 'افزودن معلم ناموفق بود';
+      toast({ title: 'خطا', description: msg, variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleViewTeacher = (teacher: Teacher) => {
@@ -116,18 +168,8 @@ export default function TeachersPage() {
     setIsViewDialogOpen(true);
   };
 
-  const handleEditTeacher = (teacher: Teacher) => {
-    setEditTeacher(teacher);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleUpdateTeacher = () => {
-    if (!editTeacher) return;
-
-    setTeachers(teachers.map(t => t.id === editTeacher.id ? editTeacher : t));
-    setIsEditDialogOpen(false);
-    setEditTeacher(null);
-    toast({ title: 'موفق', description: 'معلم با موفقیت ویرایش شد' });
+  const handleEditTeacher = () => {
+    toast({ title: 'راهنما', description: 'ویرایش معلم از پنل مدیریت کاربران انجام می‌شود.' });
   };
 
   const handleDeleteTeacher = (teacherId: number) => {
@@ -188,25 +230,29 @@ export default function TeachersPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="degree">مدرک تحصیلی</Label>
-                    <Input id="degree" value={newTeacher.degree} onChange={(e) => setNewTeacher({...newTeacher, degree: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="experience">سابقه (سال)</Label>
-                    <Input id="experience" type="number" value={newTeacher.experience} onChange={(e) => setNewTeacher({...newTeacher, experience: e.target.value})} />
+                    <Label htmlFor="password">رمز عبور</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="حداقل ۶ کاراکتر"
+                      value={newTeacher.password}
+                      onChange={(e) => setNewTeacher({ ...newTeacher, password: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">شماره تماس</Label>
-                    <Input id="phone" value={newTeacher.phone} onChange={(e) => setNewTeacher({...newTeacher, phone: e.target.value})} />
+                    <Input id="phone" value={newTeacher.phone} onChange={(e) => setNewTeacher({ ...newTeacher, phone: e.target.value })} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">ایمیل</Label>
-                    <Input id="email" type="email" value={newTeacher.email} onChange={(e) => setNewTeacher({...newTeacher, email: e.target.value})} />
+                    <Input id="email" type="email" value={newTeacher.email} onChange={(e) => setNewTeacher({ ...newTeacher, email: e.target.value })} />
                   </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>انصراف</Button>
-                  <Button onClick={handleAddTeacher}>ذخیره</Button>
+                  <Button onClick={handleAddTeacher} disabled={isSaving}>
+                    {isSaving ? 'در حال ذخیره...' : 'ذخیره'}
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -239,9 +285,9 @@ export default function TeachersPage() {
                         <GraduationCap className="h-5 w-5 text-green-600" />
                       </div>
                       <div>
-                        <p className="font-medium">{teacher.firstName} {teacher.lastName}</p>
+                        <p className="font-medium">{teacher.full_name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {teacher.employeeId} • {teacher.specialization}
+                          {teacher.employee_id} • {teacher.specialization}
                         </p>
                       </div>
                     </div>
@@ -259,8 +305,15 @@ export default function TeachersPage() {
                             ورود به پنل استاد
                           </DropdownMenuItem>
                         </Link>
+                        <DropdownMenuItem
+                          onClick={() => handleDownloadGradebook(teacher)}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <FileDown className="h-4 w-4" />
+                          چاپ دفتر کلاسی
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleEditTeacher(teacher)} className="gap-2 cursor-pointer">
+                        <DropdownMenuItem onClick={() => handleEditTeacher()} className="gap-2 cursor-pointer">
                           <Pencil className="h-4 w-4" />
                           ویرایش
                         </DropdownMenuItem>
@@ -292,8 +345,8 @@ export default function TeachersPage() {
                     <GraduationCap className="h-8 w-8 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold">{selectedTeacher.firstName} {selectedTeacher.lastName}</h3>
-                    <p className="text-muted-foreground">{selectedTeacher.employeeId}</p>
+                    <h3 className="text-xl font-bold">{selectedTeacher.full_name}</h3>
+                    <p className="text-muted-foreground">{selectedTeacher.employee_id}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -307,24 +360,6 @@ export default function TeachersPage() {
                     </span>
                   </div>
                 </div>
-                {selectedTeacher.degree && (
-                  <div className="space-y-1">
-                    <Label className="text-muted-foreground">مدرک تحصیلی</Label>
-                    <p>{selectedTeacher.degree}</p>
-                  </div>
-                )}
-                {selectedTeacher.experience !== undefined && (
-                  <div className="space-y-1">
-                    <Label className="text-muted-foreground">سابقه</Label>
-                    <p>{selectedTeacher.experience} سال</p>
-                  </div>
-                )}
-                {selectedTeacher.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedTeacher.phone}</span>
-                  </div>
-                )}
                 {selectedTeacher.email && (
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
@@ -335,98 +370,6 @@ export default function TeachersPage() {
             )}
             <DialogFooter>
               <Button onClick={() => setIsViewDialogOpen(false)}>بستن</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Teacher Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>ویرایش معلم</DialogTitle>
-              <DialogDescription>اطلاعات معلم را ویرایش کنید</DialogDescription>
-            </DialogHeader>
-            {editTeacher && (
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="editFirstName">نام</Label>
-                    <Input 
-                      id="editFirstName" 
-                      value={editTeacher.firstName} 
-                      onChange={(e) => setEditTeacher({...editTeacher, firstName: e.target.value})} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="editLastName">نام خانوادگی</Label>
-                    <Input 
-                      id="editLastName" 
-                      value={editTeacher.lastName} 
-                      onChange={(e) => setEditTeacher({...editTeacher, lastName: e.target.value})} 
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editEmployeeId">کد پرسنلی</Label>
-                  <Input 
-                    id="editEmployeeId" 
-                    value={editTeacher.employeeId} 
-                    onChange={(e) => setEditTeacher({...editTeacher, employeeId: e.target.value})} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>تخصص</Label>
-                  <Select 
-                    value={editTeacher.specialization} 
-                    onValueChange={(value) => setEditTeacher({...editTeacher, specialization: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="انتخاب کنید" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SPECIALIZATIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editDegree">مدرک تحصیلی</Label>
-                  <Input 
-                    id="editDegree" 
-                    value={editTeacher.degree || ''} 
-                    onChange={(e) => setEditTeacher({...editTeacher, degree: e.target.value})} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editExperience">سابقه (سال)</Label>
-                  <Input 
-                    id="editExperience" 
-                    type="number" 
-                    value={editTeacher.experience || ''} 
-                    onChange={(e) => setEditTeacher({...editTeacher, experience: Number(e.target.value)})} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editPhone">شماره تماس</Label>
-                  <Input 
-                    id="editPhone" 
-                    value={editTeacher.phone || ''} 
-                    onChange={(e) => setEditTeacher({...editTeacher, phone: e.target.value})} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editEmail">ایمیل</Label>
-                  <Input 
-                    id="editEmail" 
-                    type="email" 
-                    value={editTeacher.email || ''} 
-                    onChange={(e) => setEditTeacher({...editTeacher, email: e.target.value})} 
-                  />
-                </div>
-              </div>
-            )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>انصراف</Button>
-              <Button onClick={handleUpdateTeacher}>ذخیره تغییرات</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

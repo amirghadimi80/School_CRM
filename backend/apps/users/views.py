@@ -1,6 +1,8 @@
 """
 User API views.
 """
+import re
+
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -11,6 +13,7 @@ from django.shortcuts import get_object_or_404
 from apps.common.permissions import IsSuperAdmin, IsSchoolAdmin, IsSchoolMember, IsOwnerOrAdmin
 from apps.common.middleware.tenant import get_current_tenant
 from .models import User
+from apps.students.services.registration import student_internal_email
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserListSerializer,
     LoginSerializer, PasswordChangeSerializer, TokenResponseSerializer
@@ -25,21 +28,32 @@ class AuthViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['post'])
     def login(self, request):
-        """User login with email and password."""
+        """User login with email or national ID (students only)."""
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        email = serializer.validated_data['email']
+
+        identifier = serializer.validated_data['email'].strip()
         password = serializer.validated_data['password']
-        
+
+        if re.match(r'^\d{10}$', identifier):
+            email = student_internal_email(identifier)
+        else:
+            email = identifier
+
         user = authenticate(request, email=email, password=password)
-        
+
         if not user:
             return Response(
                 {'detail': 'Invalid credentials'},
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_401_UNAUTHORIZED,
             )
-        
+
+        if re.match(r'^\d{10}$', identifier) and user.role != User.ROLE_STUDENT:
+            return Response(
+                {'detail': 'Invalid credentials'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
         if not user.is_active:
             return Response(
                 {'detail': 'Account is deactivated'},

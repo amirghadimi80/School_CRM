@@ -33,7 +33,7 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'ایمیل یا رمز عبور اشتباه است');
+        throw new Error(errorData.detail || 'ایمیل/کد ملی یا رمز عبور اشتباه است');
       }
 
       const data = await response.json();
@@ -65,7 +65,7 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'ورود ناموفق بود';
-      setError(errorMessage || 'ایمیل یا رمز عبور اشتباه است');
+      setError(errorMessage || 'ایمیل/کد ملی یا رمز عبور اشتباه است');
     } finally {
       setIsLoading(false);
     }
@@ -93,11 +93,11 @@ export default function LoginPage() {
               </Alert>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">ایمیل</Label>
+              <Label htmlFor="email">ایمیل یا کد ملی</Label>
               <Input
                 id="email"
-                type="email"
-                placeholder="example@school.com"
+                type="text"
+                placeholder="example@school.com یا ۱۲۳۴۵۶۷۸۹۰"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

@@ -6,6 +6,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { PlatformBrand } from '@/components/layout/platform-brand';
+import { useSessionInfo } from '@/hooks/use-session-info';
 import {
   LayoutDashboard,
   Users,
@@ -44,6 +46,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { userName, schoolName, roleDisplay, userInitial } = useSessionInfo();
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -59,10 +62,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <aside className="fixed inset-y-0 right-0 z-50 hidden w-64 border-l bg-card lg:block">
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center border-b px-6">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <img src="/images/logo.png" alt="سپاد" className="h-8 w-8 object-contain" />
-              <span className="text-lg font-bold">مدرسه‌یار</span>
+          <div className="flex min-h-16 items-center border-b px-4 py-3">
+            <Link href="/dashboard" className="min-w-0">
+              <PlatformBrand schoolName={schoolName} />
             </Link>
           </div>
 
@@ -114,9 +116,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </SheetTrigger>
           <SheetContent side="right" className="w-64 p-0">
             <div className="flex h-full flex-col">
-              <div className="flex h-16 items-center border-b px-6">
-                <img src="/images/logo.png" alt="سپاد" className="h-8 w-8 object-contain" />
-                <span className="text-lg font-bold">مدرسه‌یار</span>
+              <div className="flex min-h-16 items-center border-b px-4 py-3">
+                <PlatformBrand schoolName={schoolName} />
               </div>
               <nav className="flex-1 space-y-1 p-4">
                 {sidebarItems.map((item) => {
@@ -155,9 +156,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </SheetContent>
         </Sheet>
 
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <img src="/images/logo.png" alt="سپاد" className="h-8 w-8 object-contain" />
-          <span className="text-lg font-bold">مدرسه‌یار</span>
+        <Link href="/dashboard" className="min-w-0">
+          <PlatformBrand schoolName={schoolName} titleClassName="text-xs" />
         </Link>
 
         <Button variant="ghost" size="icon">
@@ -182,10 +182,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </span>
             </Button>
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-sm font-medium">مدیر</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                <span className="text-sm font-medium">{userInitial}</span>
               </div>
-              <span className="text-sm font-medium hidden xl:block">مدیر سیستم</span>
+              <div className="hidden text-right xl:block">
+                <p className="text-sm font-medium">{userName || 'کاربر'}</p>
+                {roleDisplay && (
+                  <p className="text-xs text-muted-foreground">{roleDisplay}</p>
+                )}
+              </div>
             </div>
           </div>
         </header>

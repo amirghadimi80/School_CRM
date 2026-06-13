@@ -18,6 +18,9 @@ urlpatterns = [
     path('api/v1/', include([
         path('auth/', include('apps.users.urls')),
         path('schools/', include('apps.schools.urls')),
+        path('classes/', include('apps.classes.urls')),
+        path('teachers/', include('apps.teachers.urls')),
+        path('students/', include('apps.students.urls')),
         path('exams/', include('apps.exams.urls')),
         # Additional app URLs will be added here
     ])),

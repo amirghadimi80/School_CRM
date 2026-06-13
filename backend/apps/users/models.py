@@ -158,6 +158,8 @@ class UserProfile(models.Model):
     national_id = models.CharField(
         max_length=20,
         blank=True,
+        unique=True,
+        null=True,
         verbose_name=_('National ID')
     )
     birth_date = models.DateField(

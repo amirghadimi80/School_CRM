@@ -61,8 +61,8 @@ class SchoolViewSet(viewsets.ModelViewSet):
         serializer = SchoolSerializer(school)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['patch'])
-    def settings(self, request, slug=None):
+    @action(detail=True, methods=['patch'], url_path='settings')
+    def update_settings(self, request, slug=None):
         """Update school settings only."""
         school = self.get_object()
         serializer = SchoolSettingsSerializer(school, data=request.data, partial=True)
@@ -312,14 +312,77 @@ class CurriculumViewSet(viewsets.ModelViewSet):
             branch = self.request.query_params.get('branch')
             if grade:
                 queryset = queryset.filter(grade_level=grade)
-            if branch:
+                if int(grade) >= 10:
+                    if branch:
+                        queryset = queryset.filter(branch=branch)
+                else:
+                    queryset = queryset.filter(branch__isnull=True)
+            elif branch:
                 queryset = queryset.filter(branch=branch)
-            return queryset
+            return queryset.select_related('course')
         return Curriculum.objects.none()
     
     def perform_create(self, serializer):
         school = get_current_tenant()
         serializer.save(school=school)
+
+    @action(detail=False, methods=['get'])
+    def official_template(self, request):
+        """Get official curriculum template for a grade/branch."""
+        grade_level = request.query_params.get('grade_level')
+        branch = request.query_params.get('branch')
+        if not grade_level:
+            return Response({'detail': 'grade_level is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if int(grade_level) >= 10 and not branch:
+            return Response({'detail': 'branch is required for grades 10-12.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from apps.classes.models import Course
+        from .official_curriculum import get_official_template
+
+        template = get_official_template(grade_level, branch)
+        items = []
+        for item in template:
+            course = Course.objects.filter(
+                code=item['course_code'], school__isnull=True, is_active=True
+            ).first()
+            items.append({
+                **item,
+                'course_id': course.id if course else None,
+                'course_name': course.name if course else item['course_code'],
+                'found': course is not None,
+            })
+        return Response({'grade_level': grade_level, 'branch': branch, 'items': items})
+
+    @action(detail=False, methods=['post'])
+    def ensure_official(self, request):
+        """Auto-fill school curriculum with official courses (adds missing only)."""
+        school = get_current_tenant()
+        if not school:
+            return Response({'detail': 'No active school.'}, status=status.HTTP_404_NOT_FOUND)
+
+        grade_level = request.data.get('grade_level')
+        branch = request.data.get('branch')
+        if not grade_level:
+            return Response({'detail': 'grade_level is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if int(grade_level) >= 10 and not branch:
+            return Response({'detail': 'branch is required for grades 10-12.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from .official_curriculum import ensure_official_curriculum
+        result = ensure_official_curriculum(school, grade_level, branch)
+
+        queryset = Curriculum.objects.filter(
+            school=school, grade_level=grade_level,
+        )
+        if int(grade_level) >= 10:
+            queryset = queryset.filter(branch=branch)
+        else:
+            queryset = queryset.filter(branch__isnull=True)
+
+        serializer = CurriculumSerializer(queryset.select_related('course'), many=True)
+        return Response({
+            **result,
+            'entries': serializer.data,
+        })
     
     @action(detail=False, methods=['post'])
     def bulk_create(self, request):
@@ -403,96 +466,46 @@ class GeneratedScheduleViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def generate(self, request):
-        """Generate schedule for a class."""
+        """Generate schedule for a class using teacher assignments."""
         school = get_current_tenant()
         if not school:
             return Response({'detail': 'No active school.'}, status=status.HTTP_404_NOT_FOUND)
-        
+
         class_id = request.data.get('class_id')
         academic_year = request.data.get('academic_year', school.current_academic_year)
-        
+        regenerate = request.data.get('regenerate', False)
+
         if not class_id:
             return Response({'detail': 'class_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         from apps.classes.models import Class
+        from apps.teachers.services.schedule_generator import generate_class_schedule
+
         try:
             class_obj = Class.objects.get(id=class_id, school=school)
         except Class.DoesNotExist:
             return Response({'detail': 'Class not found.'}, status=status.HTTP_404_NOT_FOUND)
-        
-        # Get curriculum for this class
-        branch = None
-        if hasattr(class_obj, 'branch'):
-            branch = class_obj.branch
-        
-        curriculum = Curriculum.objects.filter(
-            school=school,
-            grade_level=class_obj.grade_level,
-            branch=branch
+
+        result = generate_class_schedule(
+            class_obj, school, academic_year, regenerate=regenerate
         )
-        
-        # Simple scheduling algorithm
-        periods = list(Period.objects.filter(school=school).order_by('period_number'))
-        days = range(6)  # Saturday to Friday
-        
-        generated = []
-        for entry in curriculum:
-            hours_needed = entry.weekly_hours
-            for day in days:
-                if hours_needed <= 0:
-                    break
-                for period in periods:
-                    if hours_needed <= 0:
-                        break
-                    
-                    # Check if slot is available
-                    existing = GeneratedSchedule.objects.filter(
-                        class_assigned=class_obj,
-                        day_of_week=day,
-                        period=period,
-                        academic_year=academic_year
-                    ).first()
-                    
-                    if not existing:
-                        # Find available teacher
-                        teacher_spec = TeacherSpecialization.objects.filter(
-                            course=entry.course,
-                            grade_levels__contains=[class_obj.grade_level]
-                        ).first()
-                        
-                        if teacher_spec:
-                            # Check teacher availability
-                            avail = TeacherAvailability.objects.filter(
-                                teacher=teacher_spec.teacher,
-                                day_of_week=day,
-                                periods__contains=[period.period_number]
-                            ).first()
-                            
-                            if avail:
-                                # Check for teacher conflicts
-                                teacher_conflict = GeneratedSchedule.objects.filter(
-                                    teacher=teacher_spec.teacher,
-                                    day_of_week=day,
-                                    period=period,
-                                    academic_year=academic_year
-                                ).first()
-                                
-                                if not teacher_conflict:
-                                    schedule = GeneratedSchedule.objects.create(
-                                        class_assigned=class_obj,
-                                        course=entry.course,
-                                        teacher=teacher_spec.teacher,
-                                        day_of_week=day,
-                                        period=period,
-                                        academic_year=academic_year
-                                    )
-                                    generated.append(schedule)
-                                    hours_needed -= 1
-        
-        serializer = GeneratedScheduleSerializer(generated, many=True)
+
+        if not result.get('success'):
+            return Response(
+                {
+                    'detail': 'امکان تولید برنامه وجود ندارد.',
+                    'errors': result.get('errors', []),
+                    'warnings': result.get('warnings', []),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         return Response({
-            'generated': len(generated),
-            'schedules': serializer.data
+            'generated': result['generated'],
+            'schedules': result['schedules'],
+            'unplaced_hours': result.get('unplaced_hours', []),
+            'warnings': result.get('warnings', []),
+            'status': result.get('status', 'complete'),
         })
     
     @action(detail=False, methods=['get'])
