@@ -1,193 +1,107 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, UserPlus, Settings, BarChart, CheckCircle, Clock, Play } from 'lucide-react';
+import { ArrowLeft, UserPlus, Settings, Rocket, HeadphonesIcon, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import { SectionHeading } from '@/components/landing/section-heading';
+
+const steps = [
+  {
+    icon: UserPlus,
+    step: '۰۱',
+    title: 'ثبت‌نام',
+    description: 'ایجاد حساب و وارد کردن اطلاعات پایه مدرسه',
+  },
+  {
+    icon: Settings,
+    step: '۰۲',
+    title: 'پیکربندی',
+    description: 'تنظیم کلاس‌ها، معلمان و دانش‌آموزان',
+  },
+  {
+    icon: Rocket,
+    step: '۰۳',
+    title: 'راه‌اندازی',
+    description: 'شروع استفاده از تمام امکانات سامانه',
+  },
+  {
+    icon: HeadphonesIcon,
+    step: '۰۴',
+    title: 'پشتیبانی',
+    description: 'همراهی تیم فنی در تمام مراحل',
+  },
+];
 
 export function HowItWorks() {
-  const steps = [
-    {
-      icon: UserPlus,
-      title: "ثبت‌نام اولیه",
-      description: "ایجاد حساب کاربری و اطلاعات پایه مدرسه",
-      time: "سریع",
-      color: "text-green-600",
-      bgColor: "bg-green-50"
-    },
-    {
-      icon: Settings,
-      title: "پیکربندی سامانه",
-      description: "تنظیمات اولیه و وارد کردن اطلاعات دانش‌آموزان",
-      time: "آسان",
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
-    },
-    {
-      icon: BarChart,
-      title: "آموزش و راه‌اندازی",
-      description: "آموزش کار با سامانه و شروع استفاده",
-      time: "کامل",
-      color: "text-purple-600",
-      bgColor: "bg-purple-50"
-    },
-    {
-      icon: CheckCircle,
-      title: "پشتیبانی مستمر",
-      description: "پشتیبانی فنی و بهینه‌سازی مستمر",
-      time: "دائمی",
-      color: "text-amber-600",
-      bgColor: "bg-amber-50"
-    }
-  ];
-
   return (
-    <section id="demo" className="py-20 bg-white">
+    <section id="demo" className="bg-slate-50 py-24">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-            فرآیند پیاده‌سازی سامانه
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            راه‌اندازی سریع و آسان سامانه مدیریت مدرسه سپاد
-          </p>
-        </div>
+        <SectionHeading
+          badge="شروع کار"
+          title="در ۴ مرحله ساده آماده‌اید"
+          description="راه‌اندازی سپاد سریع و بدون نیاز به دانش فنی است"
+        />
 
-        {/* Steps */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          {steps.map((step, index) => (
-            <div key={index} className="relative">
-              {/* Connection Line */}
-              {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-gray-300 to-gray-200 -z-10"></div>
-              )}
-              
-              <Card className="border-2 border-gray-100 hover:border-gray-300 hover:shadow-xl transition-all duration-300 group">
-                <CardContent className="p-6 text-center space-y-4">
-                  {/* Step Number */}
-                  <div className="absolute -top-3 -right-3 w-8 h-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {index + 1}
-                  </div>
-
-                  {/* Icon */}
-                  <div className={`w-16 h-16 ${step.bgColor} rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300`}>
-                    <step.icon className={`h-8 w-8 ${step.color}`} />
-                  </div>
-
-                  {/* Content */}
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {step.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm">
-                      {step.description}
-                    </p>
-                    <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${step.bgColor} ${step.color}`}>
-                      <Clock className="h-3 w-3" />
-                      {step.time}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        <div className="relative mb-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="absolute right-0 top-12 hidden h-0.5 w-full bg-gradient-to-l from-blue-200 to-emerald-200 lg:block" />
+          {steps.map((s) => (
+            <div key={s.step} className="relative rounded-2xl border border-slate-200/80 bg-white p-6">
+              <span className="absolute -top-3 right-4 rounded-full bg-gradient-to-l from-blue-600 to-emerald-600 px-3 py-0.5 text-xs font-bold text-white">
+                {s.step}
+              </span>
+              <div className="mb-4 mt-2 inline-flex rounded-xl bg-blue-50 p-3">
+                <s.icon className="h-5 w-5 text-blue-600" />
+              </div>
+              <h3 className="mb-1 font-bold text-slate-900">{s.title}</h3>
+              <p className="text-sm text-slate-600">{s.description}</p>
             </div>
           ))}
         </div>
 
-        {/* Live Demo Section */}
-        <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl p-8 lg:p-12">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h3 className="text-3xl font-bold text-gray-900">
-                قبل از خرید، ببین چطوری کار می‌کنه
-              </h3>
-              <p className="text-lg text-gray-600">
-                نیازی به ثبت‌نام نیست! همون الان دمو رو ببین و قابلیت‌ها رو تست کن
+        <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-emerald-600 p-8 lg:p-12">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div className="space-y-6 text-white">
+              <h3 className="text-2xl font-bold lg:text-3xl">۷ روز استفاده رایگان</h3>
+              <p className="leading-relaxed text-blue-100">
+                بدون نیاز به کارت بانکی، تمام امکانات را امتحان کنید و ببینید سپاد چطور مدیریت
+                مدرسه‌تان را ساده می‌کند.
               </p>
-              
+              <ul className="space-y-3">
+                {['دسترسی کامل به امکانات', 'پشتیبانی راه‌اندازی', 'لغو هر زمان'].map((item) => (
+                  <li key={item} className="flex items-center gap-2 text-sm text-blue-50">
+                    <CheckCircle className="h-4 w-4 shrink-0 text-emerald-300" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Button
+                size="lg"
+                className="bg-white text-blue-700 shadow-lg hover:bg-blue-50"
+                asChild
+              >
+                <Link href="/auth/register">
+                  شروع دوره آزمایشی
+                  <ArrowLeft className="mr-2 h-5 w-5" />
+                </Link>
+              </Button>
+            </div>
+            <div className="rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-sm">
               <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">دسترسی کامل به تمام بخش‌ها</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">داده‌های نمونه واقعی</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">بدون نیاز به ثبت‌نام</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="text-gray-700">۱۵ دقیقه زمان تست</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg font-semibold"
-                  asChild
-                >
-                  <Link href="/demo">
-                    شروع دمو رایگان
-                    <ArrowRight className="h-5 w-5 mr-2" />
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-8 py-6 text-lg font-semibold"
-                  asChild
-                >
-                  <Link href="/auth/register">
-                    شروع تریال ۷ روزه
-                    <ArrowRight className="h-5 w-5 mr-2" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Demo Preview */}
-            <div className="relative">
-              <div className="bg-white rounded-2xl shadow-2xl p-6 border border-gray-100">
-                <div className="aspect-video bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center space-y-4">
-                    <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-green-600 rounded-full mx-auto flex items-center justify-center">
-                      <Play className="h-10 w-10 text-white" />
-                    </div>
-                    <h4 className="text-xl font-semibold text-gray-800">دمو زنده سپاد</h4>
-                    <p className="text-gray-600">روی دکمه Play کلیک کن</p>
+                {[
+                  { label: 'زمان راه‌اندازی', val: 'کمتر از ۱ ساعت' },
+                  { label: 'نیاز به نصب', val: 'خیر — تحت وب' },
+                  { label: 'آموزش اولیه', val: 'رایگان' },
+                  { label: 'پشتیبانی', val: '۲۴ ساعته' },
+                ].map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between border-b border-white/10 pb-3 last:border-0 last:pb-0"
+                  >
+                    <span className="text-sm text-blue-100">{row.label}</span>
+                    <span className="font-semibold text-white">{row.val}</span>
                   </div>
-                </div>
+                ))}
               </div>
-              
-              {/* Floating Badge */}
-              <div className="absolute -top-4 -right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-pulse">
-                <span className="font-semibold">آماده تست</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Stats */}
-        <div className="mt-16 text-center">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-green-600">۴</div>
-              <div className="text-sm text-gray-600">دقیقه راه‌اندازی</div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-blue-600">۰</div>
-              <div className="text-sm text-gray-600">نیاز به تخصص</div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-purple-600">۲۴/۷</div>
-              <div className="text-sm text-gray-600">پشتیبانی</div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-amber-600">۱۰۰٪</div>
-              <div className="text-sm text-gray-600">رضایت تضمینی</div>
             </div>
           </div>
         </div>

@@ -1,291 +1,194 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, Star, ArrowRight, Zap, CheckCircle } from 'lucide-react';
+import { Check, X, Star, ArrowLeft, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import { SectionHeading } from '@/components/landing/section-heading';
+import { cn } from '@/lib/utils';
 
 export function PricingSection() {
   const [isAnnual, setIsAnnual] = useState(true);
 
   const plans = [
     {
-      name: "آزمایشی",
-      description: "برای شروع و تست کامل",
+      name: 'آزمایشی',
+      description: 'برای آشنایی با سامانه',
       price: { monthly: 0, annual: 0 },
       originalPrice: null,
-      badge: "۷ روز رایگان",
-      badgeColor: "bg-green-100 text-green-800",
-      features: [
-        "تا ۵۰ دانش‌آموز",
-        "تمام امکانات پایه",
-        "پشتیبانی ایمیل",
-        "دسترسی به گزارش‌ها",
-        "مدیریت حضور و غیاب"
-      ],
-      notIncluded: [
-        "گزارش‌گیری پیشرفته",
-        "پشتیبانی تلفنی",
-        "API دسترسی",
-        "برندینگ سفارشی"
-      ],
-      cta: "شروع رایگان",
-      ctaColor: "bg-green-600 hover:bg-green-700",
-      popular: false
+      features: ['تا ۵۰ دانش‌آموز', 'تمام امکانات پایه', 'پشتیبانی ایمیل', '۷ روز رایگان'],
+      notIncluded: ['گزارش‌گیری پیشرفته', 'API', 'برندینگ سفارشی'],
+      cta: 'شروع رایگان',
+      popular: false,
     },
     {
-      name: "پایه",
-      description: "برای مدارس کوچک و متوسط",
+      name: 'پایه',
+      description: 'مدارس کوچک و متوسط',
       price: { monthly: 290000, annual: 2900000 },
       originalPrice: { monthly: 390000, annual: 3900000 },
-      badge: "پرفروش‌ترین",
-      badgeColor: "bg-blue-100 text-blue-800",
       features: [
-        "تا ۲۰۰ دانش‌آموز",
-        "تمام امکانات پایه",
-        "پشتیبانی تلفنی و ایمیل",
-        "گزارش‌گیری پیشرفته",
-        "مدیریت مالی کامل",
-        "اپلیکیشن موبایل",
-        "بکاپ روزانه"
+        'تا ۲۰۰ دانش‌آموز',
+        'گزارش‌گیری پیشرفته',
+        'مدیریت مالی',
+        'پشتیبانی تلفنی',
+        'بکاپ روزانه',
       ],
-      notIncluded: [
-        "API دسترسی",
-        "برندینگ سفارشی",
-        "مدیریت چند شعبه"
-      ],
-      cta: "شروع تریال رایگان",
-      ctaColor: "bg-blue-600 hover:bg-blue-700",
-      popular: true
+      notIncluded: ['API', 'چند شعبه'],
+      cta: 'شروع تریال',
+      popular: true,
     },
     {
-      name: "حرفه‌ای",
-      description: "برای مدارس بزرگ و زنجیره‌ای",
+      name: 'حرفه‌ای',
+      description: 'مدارس بزرگ',
       price: { monthly: 590000, annual: 5900000 },
       originalPrice: { monthly: 790000, annual: 7900000 },
-      badge: "مقرون‌به‌صرفه",
-      badgeColor: "bg-purple-100 text-purple-800",
       features: [
-        "تا ۵۰۰ دانش‌آموز",
-        "تمام امکانات پایه",
-        "پشتیبانی ویژه ۲۴/۷",
-        "گزارش‌گیری پیشرفته",
-        "مدیریت مالی کامل",
-        "اپلیکیشن موبایل",
-        "بکاپ روزانه",
-        "API دسترسی کامل",
-        "برندینگ سفارشی",
-        "آموزش حضوری"
+        'تا ۵۰۰ دانش‌آموز',
+        'پشتیبانی ۲۴/۷',
+        'API کامل',
+        'برندینگ سفارشی',
+        'آموزش حضوری',
       ],
-      notIncluded: [
-        "مدیریت نامحدود شعبه"
-      ],
-      cta: "شروع تریال رایگان",
-      ctaColor: "bg-purple-600 hover:bg-purple-700",
-      popular: false
+      notIncluded: ['شعبه نامحدود'],
+      cta: 'شروع تریال',
+      popular: false,
     },
     {
-      name: "سازمانی",
-      description: "برای آموزش‌وپرورش و سازمان‌های بزرگ",
+      name: 'سازمانی',
+      description: 'سازمان‌ها و زنجیره‌ها',
       price: { monthly: 990000, annual: 9900000 },
-      originalPrice: { monthly: 1290000, annual: 12900000 },
-      badge: "پیشرفته",
-      badgeColor: "bg-amber-100 text-amber-800",
+      originalPrice: null,
       features: [
-        "دانش‌آموزان نامحدود",
-        "تمام امکانات حرفه‌ای",
-        "مدیریت چند شعبه",
-        "سرور اختصاصی",
-        "پشتیبانی اختصاصی",
-        "توسعه سفارشی",
-        "یکپارچه‌سازی با سیستم‌های دیگر",
-        "SLA تضمینی",
-        "آموزش کامل تیم"
+        'دانش‌آموز نامحدود',
+        'چند شعبه',
+        'سرور اختصاصی',
+        'توسعه سفارشی',
+        'SLA تضمینی',
       ],
       notIncluded: [],
-      cta: "تماس با فروش",
-      ctaColor: "bg-amber-600 hover:bg-amber-700",
-      popular: false
-    }
+      cta: 'تماس با فروش',
+      popular: false,
+    },
   ];
 
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('fa-IR').format(amount);
-  };
-
-  const discountPercentage = isAnnual ? 25 : 20;
+  const formatPrice = (amount: number) => new Intl.NumberFormat('fa-IR').format(amount);
 
   return (
-    <section id="pricing" className="py-20 bg-gray-50">
+    <section id="pricing" className="py-24">
       <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-            تعرفه‌های مناسب برای هر مدرسه‌ای
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            با تخفیف ویژه {discountPercentage}% فقط امروز شروع کن
-          </p>
+        <SectionHeading
+          badge="قیمت‌گذاری"
+          title="پلن مناسب برای هر مدرسه"
+          description="۷ روز رایگان — بدون نیاز به کارت بانکی"
+        />
 
-          {/* Toggle */}
-          <div className="inline-flex items-center bg-white rounded-lg p-1 shadow-md">
+        <div className="mb-12 flex justify-center">
+          <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
             <button
+              type="button"
               onClick={() => setIsAnnual(false)}
-              className={`px-6 py-3 rounded-md font-semibold transition-all ${
-                !isAnnual
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={cn(
+                'rounded-lg px-5 py-2.5 text-sm font-semibold transition-all',
+                !isAnnual ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'
+              )}
             >
               ماهانه
             </button>
             <button
+              type="button"
               onClick={() => setIsAnnual(true)}
-              className={`px-6 py-3 rounded-md font-semibold transition-all relative ${
-                isAnnual
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={cn(
+                'relative rounded-lg px-5 py-2.5 text-sm font-semibold transition-all',
+                isAnnual ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'
+              )}
             >
               سالانه
-              <Badge className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1">
+              <Badge className="absolute -top-2 -left-2 bg-emerald-500 text-[10px] text-white">
                 -۲۵٪
               </Badge>
             </button>
           </div>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          {plans.map((plan, index) => (
-            <Card 
-              key={index} 
-              className={`relative border-2 ${
-                plan.popular 
-                  ? 'border-blue-500 shadow-xl scale-105' 
-                  : 'border-gray-200 hover:border-gray-300'
-              } transition-all duration-300`}
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {plans.map((plan) => (
+            <div
+              key={plan.name}
+              className={cn(
+                'relative flex flex-col rounded-2xl border bg-white p-6 transition-shadow hover:shadow-lg',
+                plan.popular
+                  ? 'border-blue-300 shadow-lg shadow-blue-100/50 ring-1 ring-blue-200'
+                  : 'border-slate-200/80'
+              )}
             >
-              {/* Popular Badge */}
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-blue-600 text-white px-4 py-2 text-sm font-semibold">
-                    <Star className="h-4 w-4 ml-1" />
-                    {plan.badge}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-blue-600 px-3 py-1 text-white">
+                    <Star className="ml-1 h-3 w-3" />
+                    پرطرفدار
                   </Badge>
                 </div>
               )}
 
-              <CardHeader className="text-center pb-4">
-                <div className="space-y-2">
-                  <CardTitle className="text-xl font-bold text-gray-900">
-                    {plan.name}
-                  </CardTitle>
-                  <p className="text-gray-600 text-sm">
-                    {plan.description}
-                  </p>
-                </div>
-
-                {/* Price */}
-                <div className="space-y-2 pt-4">
+              <div className="mb-6 pt-2 text-center">
+                <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
+                <p className="mt-1 text-xs text-slate-500">{plan.description}</p>
+                <div className="mt-4">
                   {plan.originalPrice && (
-                    <div className="text-gray-400 line-through text-sm">
+                    <p className="text-sm text-slate-400 line-through">
                       {formatPrice(plan.originalPrice[isAnnual ? 'annual' : 'monthly'])} تومان
-                    </div>
+                    </p>
                   )}
-                  <div className="flex items-baseline justify-center gap-2">
-                    <span className="text-3xl font-bold text-gray-900">
-                      {formatPrice(plan.price[isAnnual ? 'annual' : 'monthly'])}
-                    </span>
-                    <span className="text-gray-600">
+                  <p className="text-3xl font-bold text-slate-900">
+                    {formatPrice(plan.price[isAnnual ? 'annual' : 'monthly'])}
+                    <span className="text-sm font-normal text-slate-500">
+                      {' '}
                       تومان/{isAnnual ? 'سال' : 'ماه'}
                     </span>
-                  </div>
-                  {isAnnual && plan.originalPrice && (
-                    <div className="text-green-600 text-sm font-semibold">
-                      صرفه‌جویی {formatPrice(
-                        plan.originalPrice.annual - plan.price.annual
-                      )} تومانی در سال
-                    </div>
-                  )}
+                  </p>
                 </div>
-              </CardHeader>
+              </div>
 
-              <CardContent className="space-y-6">
-                {/* Features */}
-                <div className="space-y-3">
-                  {plan.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-3">
-                      <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 text-sm">{feature}</span>
-                    </div>
-                  ))}
-                  {plan.notIncluded.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-3 opacity-50">
-                      <X className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-500 text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
+              <ul className="mb-6 flex-1 space-y-2.5">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-slate-700">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                    {f}
+                  </li>
+                ))}
+                {plan.notIncluded.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-slate-400">
+                    <X className="mt-0.5 h-4 w-4 shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
 
-                {/* CTA */}
-                <Button
-                  className={`w-full py-6 text-lg font-semibold ${plan.ctaColor} text-white`}
-                  asChild
-                >
-                  <Link href="/auth/register">
-                    {plan.cta}
-                    <ArrowRight className="h-5 w-5 mr-2" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+              <Button
+                className={cn(
+                  'w-full',
+                  plan.popular
+                    ? 'bg-gradient-to-l from-blue-600 to-blue-700'
+                    : 'bg-slate-900 hover:bg-slate-800'
+                )}
+                asChild
+              >
+                <Link href="/auth/register">
+                  {plan.cta}
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           ))}
         </div>
 
-        {/* Urgency Section */}
-        <div className="bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl p-8 text-white text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Zap className="h-6 w-6" />
-            <h3 className="text-2xl font-bold">پیشنهاد ویژه امروز فقط معتبره!</h3>
-          </div>
-          <p className="text-xl mb-6 opacity-90">
-            تخفیف {discountPercentage}% + ۱ ماه رایگان برای همه پلن‌ها
+        <div className="mt-12 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-8 text-center">
+          <CheckCircle className="mx-auto mb-3 h-8 w-8 text-emerald-600" />
+          <h3 className="text-lg font-bold text-slate-900">تضمین بازگشت وجه ۳۰ روزه</h3>
+          <p className="mx-auto mt-2 max-w-lg text-sm text-slate-600">
+            اگر راضی نبودید، بدون سوال پولتان را برمی‌گردانیم.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <div className="bg-white/20 backdrop-blur px-6 py-3 rounded-lg">
-              <span className="font-semibold">زمان باقی‌مانده: </span>
-              <span className="text-2xl font-bold" id="urgency-timer">۲۳:۵۹:۴۵</span>
-            </div>
-            <Button
-              size="lg"
-              className="bg-white text-red-600 hover:bg-gray-100 px-8 py-6 text-lg font-semibold"
-              asChild
-            >
-              <Link href="/auth/register">
-                شروع فوری و دریافت تخفیف
-                <ArrowRight className="h-5 w-5 mr-2" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        {/* Guarantee */}
-        <div className="mt-16 text-center">
-          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="h-10 w-10 text-green-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              تضمین بازگشت پول ۳۰ روزه
-            </h3>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              اگر به هر دلیلی از سپاد راضی نبودی، تمام پولت رو بدون هیچ سوالی برگردونیم. 
-              ریسک هیچی نداری، فقط امتحان کن.
-            </p>
-          </div>
         </div>
       </div>
     </section>

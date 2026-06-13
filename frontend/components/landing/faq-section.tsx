@@ -1,180 +1,104 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp, Shield, Clock, Users, Database, Smartphone, HelpCircle } from 'lucide-react';
+import { ChevronDown, Shield, Clock, Users, Database, Smartphone, HelpCircle, Phone } from 'lucide-react';
+import { SectionHeading } from '@/components/landing/section-heading';
+import { cn } from '@/lib/utils';
+
+const faqs = [
+  {
+    question: 'آیا داده‌های مدرسه امن است؟',
+    answer:
+      'بله. داده‌ها با رمزنگاری AES-256 محافظت می‌شوند و روی سرورهای امن نگهداری می‌شوند. سطوح دسترسی برای هر نقش جداگانه تعریف شده است.',
+    icon: Shield,
+  },
+  {
+    question: 'آیا می‌توانم داده‌ها را خارج کنم؟',
+    answer:
+      'بله. هر زمان می‌توانید اطلاعات را در فرمت Excel، CSV یا PDF دریافت کنید. داده‌ها متعلق به شماست.',
+    icon: Database,
+  },
+  {
+    question: 'راه‌اندازی چقدر طول می‌کشد؟',
+    answer:
+      'ثبت‌نام و تنظیمات اولیه کمتر از یک ساعت زمان می‌برد. تیم پشتیبانی در تمام مراحل همراه شماست.',
+    icon: Clock,
+  },
+  {
+    question: 'برای مدرسه کوچک هم مناسب است؟',
+    answer:
+      'بله. پلن‌های مختلف برای هر اندازه مدرسه وجود دارد. دوره ۷ روزه رایگان به شما امکان می‌دهد قبل از خرید تست کنید.',
+    icon: Users,
+  },
+  {
+    question: 'اپلیکیشن موبایل دارید؟',
+    answer:
+      'بله. از طریق مرورگر موبایل تمام بخش‌ها در دسترس است. معلمان حضور و غیاب ثبت می‌کنند و اولیا نمرات را می‌بینند.',
+    icon: Smartphone,
+  },
+  {
+    question: 'پشتیبانی چگونه است؟',
+    answer:
+      'پشتیبانی تلفنی، ایمیل و چت آنلاین. پلن‌های بالاتر پشتیبانی ۲۴ ساعته دارند. معمولاً کمتر از ۵ دقیقه پاسخ می‌دهیم.',
+    icon: HelpCircle,
+  },
+];
 
 export function FAQSection() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  const faqs = [
-    {
-      question: "آیا داده‌های مدرسه من امن هستن؟",
-      answer: "بله، ما از بالاترین استانداردهای امنیتی استفاده می‌کنیم. تمام داده‌ها با رمزنگاری AES-256 محافظت میشن و روی سرورهای امن ایران نگهداری میشن. همچنین ما به GDPR و قوانین حفاظت از داده‌های ایران پایبند هستیم.",
-      icon: Shield,
-      category: "امنیت"
-    },
-    {
-      question: "آیا می‌تونم داده‌هام رو از سیستم خارج کنم؟",
-      answer: "قطعاً. شما مالک کامل داده‌های خودتون هستید و هر زمان که بخواید می‌تونید تمام اطلاعات رو در فرمت‌های استاندارد (Excel, CSV, PDF) export کنید. ما هیچ‌وقت شما رو قفل نمی‌کنیم.",
-      icon: Database,
-      category: "داده‌ها"
-    },
-    {
-      question: "چقدر طول می‌کشه تا سیستم رو راه‌اندازی کنم؟",
-      answer: "راه‌اندازی اولیه فقط ۴ دقیقه طول می‌کشه! ثبت‌نام ۲ دقیقه، تنظیمات اولیه ۲ دقیقه. بعد از اون می‌تونید بلافاصله شروع به استفاده کنید. تیم پشتیبانی هم در تمام مراحل کنار شماست.",
-      icon: Clock,
-      category: "شروع"
-    },
-    {
-      question: "آیا برای مدرسه کوچک من مناسب هست؟",
-      answer: "بله! ما پلن‌های مختلفی برای هر سایزی داریم. از مدرسه با ۱۰ دانش‌آموز گرفته تا زنجیره‌های بزرگ. پلن آزمایشی رایگان به شما اجازه میده قبل از خرید تست کنید که چقدر برای مدرسه شما مناسب هست.",
-      icon: Users,
-      category: "مناسب‌سازی"
-    },
-    {
-      question: "آیا اپلیکیشن موبایل هم دارید؟",
-      answer: "بله! اپلیکیشن موبایل ما برای اندروید و iOS در دسترس هست. معلمان می‌تونن حضور و غیاب ثبت کنن، والدین نمرات فرزندانشون رو ببینن، و مدیران از هر کجا به داشبورد دسترسی داشته باشن.",
-      icon: Smartphone,
-      category: "دسترسی"
-    },
-    {
-      question: "اگه مشکلی پیش بیاد چطور پشتیبانی می‌کنید؟",
-      answer: "پشتیبانی ما ۲۴/۷ آماده پاسخگویی هست. پلن‌های پایه به بالا پشتیبانی تلفنی هم دارن. معمولاً کمتر از ۵ دقیقه پاسخ می‌دیم. علاوه بر این، آموزش‌های ویدیویی و مستندات کامل هم در اختیار شماست.",
-      icon: HelpCircle,
-      category: "پشتیبانی"
-    }
-  ];
-
-  const toggleFAQ = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
-
-  const categories = ["همه", "امنیت", "داده‌ها", "شروع", "مناسب‌سازی", "دسترسی", "پشتیبانی"];
-  const [selectedCategory, setSelectedCategory] = useState("همه");
-
-  const filteredFAQs = selectedCategory === "همه" 
-    ? faqs 
-    : faqs.filter(faq => faq.category === selectedCategory);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-20 bg-white">
+    <section id="faq" className="bg-slate-50 py-24">
       <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-            سوالات متداول شما
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            هر سوالی دارید اینجا جواب دادیم. باز هم سوالی بود؟ تیم پشتیبانی آماده‌ست.
-          </p>
-        </div>
+        <SectionHeading
+          badge="سوالات"
+          title="پرسش‌های متداول"
+          description="پاسخ سوالات رایج درباره سپاد"
+        />
 
-        {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-3 mb-12">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
-              onClick={() => setSelectedCategory(category)}
-              className="px-6 py-2"
-            >
-              {category}
-            </Button>
-          ))}
-        </div>
-
-        {/* FAQ Items */}
-        <div className="max-w-4xl mx-auto space-y-4 mb-16">
-          {filteredFAQs.map((faq, index) => (
-            <Card 
-              key={index} 
-              className="border-2 border-gray-100 hover:border-gray-200 transition-all duration-300"
-            >
-              <CardContent className="p-6">
+        <div className="mx-auto max-w-3xl space-y-3">
+          {faqs.map((faq, index) => {
+            const isOpen = openIndex === index;
+            return (
+              <div
+                key={faq.question}
+                className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white"
+              >
                 <button
-                  onClick={() => toggleFAQ(index)}
-                  className="w-full flex items-start gap-4 text-right"
+                  type="button"
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                  className="flex w-full items-center gap-4 p-5 text-right"
                 >
-                  <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
-                    <faq.icon className="h-6 w-6 text-blue-600" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+                    <faq.icon className="h-4 w-4 text-blue-600" />
                   </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {faq.question}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                          {faq.category}
-                        </span>
-                        {openIndex === index ? (
-                          <ChevronUp className="h-5 w-5 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-gray-400" />
-                        )}
-                      </div>
-                    </div>
-                    
-                    {openIndex === index && (
-                      <div className="mt-4 text-gray-600 leading-relaxed animate-in slide-in-from-top-2 duration-200">
-                        {faq.answer}
-                      </div>
+                  <span className="flex-1 font-semibold text-slate-900">{faq.question}</span>
+                  <ChevronDown
+                    className={cn(
+                      'h-5 w-5 shrink-0 text-slate-400 transition-transform',
+                      isOpen && 'rotate-180'
                     )}
-                  </div>
+                  />
                 </button>
-              </CardContent>
-            </Card>
-          ))}
+                {isOpen && (
+                  <div className="border-t border-slate-100 px-5 pb-5 pt-0">
+                    <p className="pr-14 text-sm leading-relaxed text-slate-600">{faq.answer}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Still Have Questions */}
-        <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-8 text-center">
-          <div className="max-w-2xl mx-auto space-y-6">
-            <h3 className="text-2xl font-bold text-gray-900">
-              هنوز سوالی دارید؟
-            </h3>
-            <p className="text-lg text-gray-600">
-              تیم پشتیبانی ما ۲۴/۷ آماده پاسخگویی به تمام سوالات شماست
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Smartphone className="h-6 w-6 text-green-600" />
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-1">تلفنی</h4>
-                <p className="text-sm text-gray-600">۰۹۱۲۶۶۰۹۲۶۱</p>
-                <p className="text-xs text-gray-500">۲۴/۷ پاسخگویی</p>
-              </div>
-              
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Users className="h-6 w-6 text-blue-600" />
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-1">چت آنلاین</h4>
-                <p className="text-sm text-gray-600">همین الان</p>
-                <p className="text-xs text-gray-500">کمتر از ۵ دقیقه</p>
-              </div>
-              
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Clock className="h-6 w-6 text-purple-600" />
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-1">ایمیل</h4>
-                <p className="text-sm text-gray-600">support@sepaad.ir</p>
-                <p className="text-xs text-gray-500">حداکثر ۲ ساعت</p>
-              </div>
-            </div>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-yellow-800 font-semibold">
-                💡 نکته: بیشتر سوالات در کمتر از ۲ دقیقه پاسخ داده میشن!
-              </p>
-            </div>
-          </div>
+        <div className="mx-auto mt-10 max-w-md rounded-2xl border border-blue-100 bg-blue-50/50 p-6 text-center">
+          <Phone className="mx-auto mb-2 h-5 w-5 text-blue-600" />
+          <p className="font-semibold text-slate-900">سوال دیگری دارید؟</p>
+          <p className="mt-1 text-sm text-slate-600">
+            با ما تماس بگیرید:{' '}
+            <a href="tel:09126609261" className="font-medium text-blue-600 hover:underline">
+              ۰۹۱۲۶۶۰۹۲۶۱
+            </a>
+          </p>
         </div>
       </div>
     </section>

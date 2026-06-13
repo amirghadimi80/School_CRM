@@ -52,6 +52,22 @@ export function useSessionInfo() {
     };
 
     load();
+
+    const onSessionUpdated = () => {
+      const cached = localStorage.getItem('user');
+      if (!cached) return;
+      try {
+        const parsed = JSON.parse(cached) as StoredUser;
+        setUserName(resolveUserName(parsed));
+        setRoleDisplay(parsed.role_display || '');
+        if (parsed.school_name) setSchoolName(parsed.school_name);
+      } catch {
+        // ignore invalid cache
+      }
+    };
+
+    window.addEventListener('session-updated', onSessionUpdated);
+    return () => window.removeEventListener('session-updated', onSessionUpdated);
   }, []);
 
   const userInitial = userName ? userName.trim().charAt(0) : '؟';

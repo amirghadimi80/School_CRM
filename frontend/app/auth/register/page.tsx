@@ -4,11 +4,34 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, GraduationCap } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { AuthLayout } from '@/components/auth/auth-layout';
+import { AuthField } from '@/components/auth/auth-field';
+import {
+  Loader2,
+  Lock,
+  Mail,
+  Phone,
+  User,
+  ArrowLeft,
+  GraduationCap,
+  BookOpen,
+  Users,
+} from 'lucide-react';
+
+const roleOptions = [
+  { value: 'student', label: 'دانش‌آموز', icon: BookOpen },
+  { value: 'teacher', label: 'معلم', icon: GraduationCap },
+  { value: 'parent', label: 'والد', icon: Users },
+];
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -56,7 +79,6 @@ export default function RegisterPage() {
 
       const data = await response.json();
 
-      // Store tokens
       localStorage.setItem('access_token', data.access);
       localStorage.setItem('refresh_token', data.refresh);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -65,7 +87,6 @@ export default function RegisterPage() {
         localStorage.setItem('school_id', data.user.school.id);
       }
 
-      // Redirect based on role
       const userRole = data.user?.role;
       if (userRole === 'teacher') {
         router.push('/teacher/dashboard');
@@ -83,127 +104,135 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-100 p-4" dir="rtl">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <GraduationCap className="h-10 w-10 text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">ثبت‌نام در سامانه سپاد</CardTitle>
-          <CardDescription>
-            اطلاعات خود را وارد کنید تا حساب کاربری ایجاد شود
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">نام</Label>
-                <Input
-                  id="firstName"
-                  type="text"
-                  placeholder="نام"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">نام خانوادگی</Label>
-                <Input
-                  id="lastName"
-                  type="text"
-                  placeholder="نام خانوادگی"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">ایمیل</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="example@school.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">شماره موبایل</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">رمز عبور</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">تکرار رمز عبور</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">نوع کاربر</Label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="student">دانش‌آموز</option>
-                <option value="teacher">معلم</option>
-                <option value="parent">والد</option>
-              </select>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  در حال ثبت‌نام...
-                </>
-              ) : (
-                'ثبت‌نام'
-              )}
-            </Button>
-            <div className="text-sm text-muted-foreground text-center">
-              قبلاً حساب دارید؟{' '}
-              <Link href="/auth/login" className="text-primary hover:underline">
-                وارد شوید
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+    <AuthLayout
+      title="ثبت‌نام در سپاد"
+      subtitle="اطلاعات خود را وارد کنید تا حساب کاربری ایجاد شود"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <Alert variant="destructive" className="border-red-200 bg-red-50">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid grid-cols-2 gap-3">
+          <AuthField
+            label="نام"
+            id="firstName"
+            icon={User}
+            type="text"
+            placeholder="نام"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+            autoComplete="given-name"
+          />
+          <AuthField
+            label="نام خانوادگی"
+            id="lastName"
+            type="text"
+            placeholder="نام خانوادگی"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+            autoComplete="family-name"
+          />
+        </div>
+
+        <AuthField
+          label="ایمیل"
+          id="email"
+          icon={Mail}
+          type="email"
+          placeholder="example@school.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+        />
+
+        <AuthField
+          label="شماره موبایل"
+          id="phone"
+          icon={Phone}
+          type="tel"
+          placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          autoComplete="tel"
+        />
+
+        <AuthField
+          label="رمز عبور"
+          id="password"
+          icon={Lock}
+          type="password"
+          placeholder="حداقل ۸ کاراکتر"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="new-password"
+        />
+
+        <AuthField
+          label="تکرار رمز عبور"
+          id="confirmPassword"
+          icon={Lock}
+          type="password"
+          placeholder="••••••••"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          autoComplete="new-password"
+        />
+
+        <div className="space-y-2">
+          <Label htmlFor="role" className="text-sm font-medium text-slate-700">
+            نوع کاربر
+          </Label>
+          <Select value={role} onValueChange={setRole}>
+            <SelectTrigger id="role" className="h-11 border-slate-200 bg-slate-50/80">
+              <SelectValue placeholder="نوع کاربر را انتخاب کنید" />
+            </SelectTrigger>
+            <SelectContent>
+              {roleOptions.map(({ value, label, icon: Icon }) => (
+                <SelectItem key={value} value={value}>
+                  <span className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    {label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="mt-2 h-11 w-full bg-gradient-to-l from-emerald-600 to-blue-600 text-base font-semibold shadow-md shadow-emerald-200/50 transition-all hover:from-emerald-700 hover:to-blue-700 hover:shadow-lg"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              در حال ثبت‌نام...
+            </>
+          ) : (
+            'ایجاد حساب کاربری'
+          )}
+        </Button>
+
+        <p className="pt-1 text-center text-sm text-muted-foreground">
+          قبلاً حساب دارید؟{' '}
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center gap-1 font-semibold text-primary transition-colors hover:text-primary/80"
+          >
+            وارد شوید
+            <ArrowLeft className="h-3.5 w-3.5" />
+          </Link>
+        </p>
+      </form>
+    </AuthLayout>
   );
 }

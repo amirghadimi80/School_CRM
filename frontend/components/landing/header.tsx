@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Phone, Shield } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
+import { PLATFORM_NAME } from '@/lib/brand';
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -11,114 +12,92 @@ export function Header() {
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
     const href = e.currentTarget.href;
-    const targetId = href.replace(/.*#/, "");
-    const elem = document.getElementById(targetId);
-    elem?.scrollIntoView({
-      behavior: 'smooth',
-    });
+    const targetId = href.replace(/.*#/, '');
+    document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' });
     setIsMobileMenuOpen(false);
   };
 
   const navigation = [
     { name: 'ویژگی‌ها', href: '#features' },
+    { name: 'نحوه کار', href: '#demo' },
     { name: 'قیمت‌گذاری', href: '#pricing' },
-    { name: 'دمو', href: '#demo' },
-    { name: 'درباره ما', href: '#about' },
-    { name: 'تماس با ما', href: '#contact' }
+    { name: 'سوالات', href: '#faq' },
+    { name: 'تماس', href: '#contact' },
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur-lg">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <img src="/images/logo.png" alt="سپاد" className="h-10 w-10 object-contain" />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">سپاد</h1>
-              <p className="text-xs text-gray-600">سامانه مدیریت مدرسه</p>
+        <div className="flex h-16 items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <img src="/images/logo.png" alt="سپاد" className="h-9 w-9 object-contain" />
+            <div className="hidden sm:block">
+              <p className="text-sm font-bold text-slate-900">سپاد</p>
+              <p className="text-[11px] text-slate-500">{PLATFORM_NAME}</p>
             </div>
-          </div>
+          </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden items-center gap-8 md:flex">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 onClick={handleScroll}
-                className="text-gray-700 hover:text-green-600 font-medium transition-colors"
+                className="text-sm font-medium text-slate-600 transition-colors hover:text-blue-600"
               >
                 {item.name}
               </Link>
             ))}
           </nav>
 
-          {/* CTA Buttons */}
-          <div className="hidden md:flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-green-600 text-green-600 hover:bg-green-50"
-              asChild
-            >
-              <Link href="#demo" onClick={handleScroll}>
-                مشاهده دمو
-              </Link>
+          <div className="hidden items-center gap-3 md:flex">
+            <Button variant="ghost" size="sm" className="text-slate-600" asChild>
+              <Link href="/auth/login">ورود</Link>
             </Button>
             <Button
               size="sm"
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-gradient-to-l from-blue-600 to-blue-700 shadow-sm shadow-blue-200/50"
               asChild
             >
-              <Link href="/auth/register">
-                شروع رایگان
-              </Link>
+              <Link href="/auth/register">شروع رایگان</Link>
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2"
+            type="button"
+            className="rounded-lg p-2 md:hidden"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="منو"
           >
             {isMobileMenuOpen ? (
-              <X className="h-6 w-6 text-gray-700" />
+              <X className="h-6 w-6 text-slate-700" />
             ) : (
-              <Menu className="h-6 w-6 text-gray-700" />
+              <Menu className="h-6 w-6 text-slate-700" />
             )}
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4">
-            <nav className="flex flex-col gap-4 mb-4">
+          <div className="border-t border-slate-100 py-4 md:hidden">
+            <nav className="mb-4 flex flex-col gap-1">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-gray-700 hover:text-green-600 font-medium transition-colors"
+                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   onClick={handleScroll}
                 >
                   {item.name}
                 </Link>
               ))}
             </nav>
-            <div className="flex flex-col gap-3">
-              <Button
-                variant="outline"
-                className="border-green-600 text-green-600 hover:bg-green-50 w-full"
-                asChild
-              >
-                <Link href="#demo" onClick={handleScroll}>
-                  مشاهده دمو
+            <div className="flex flex-col gap-2">
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  ورود
                 </Link>
               </Button>
-              <Button
-                className="bg-green-600 hover:bg-green-700 text-white w-full"
-                asChild
-              >
+              <Button className="w-full bg-gradient-to-l from-blue-600 to-blue-700" asChild>
                 <Link href="/auth/register" onClick={() => setIsMobileMenuOpen(false)}>
                   شروع رایگان
                 </Link>
@@ -126,22 +105,6 @@ export function Header() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Trust Bar */}
-      <div className="bg-green-50 border-t border-green-100 py-2">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-6 text-sm text-green-800">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              <span>تضمین بازگشت پول ۳۰ روزه</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              <span>پشتیبانی ۲۴/۷: ۰۹۱۲۶۶۰۹۲۶۱</span>
-            </div>
-          </div>
-        </div>
       </div>
     </header>
   );

@@ -16,7 +16,8 @@ from .models import User
 from apps.students.services.registration import student_internal_email
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserListSerializer,
-    LoginSerializer, PasswordChangeSerializer, TokenResponseSerializer
+    LoginSerializer, PasswordChangeSerializer, TokenResponseSerializer,
+    UserSelfUpdateSerializer,
 )
 
 
@@ -108,11 +109,63 @@ class AuthViewSet(viewsets.ViewSet):
         except Exception:
             return Response({'detail': 'Successfully logged out'})
     
-    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=False, methods=['get', 'patch'], permission_classes=[permissions.IsAuthenticated])
     def me(self, request):
-        """Get current user info."""
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
+        """Get or update current user info."""
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data)
+
+        serializer = UserSelfUpdateSerializer(
+            request.user,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(UserSerializer(user).data)
+
+    @action(
+        detail=False,
+        methods=['post'],
+        permission_classes=[permissions.IsAuthenticated],
+        url_path='me/upload_avatar',
+    )
+    def upload_avatar(self, request):
+        """Upload current user's avatar."""
+        avatar = request.FILES.get('avatar')
+        if not avatar:
+            return Response(
+                {'detail': 'avatar is required'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = request.user
+        user.avatar = avatar
+        user.save(update_fields=['avatar'])
+        return Response(UserSerializer(user).data)
+
+    @action(
+        detail=False,
+        methods=['post'],
+        permission_classes=[permissions.IsAuthenticated],
+        url_path='me/change_password',
+    )
+    def change_password(self, request):
+        """Change current user's password."""
+        serializer = PasswordChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        if not user.check_password(serializer.validated_data['old_password']):
+            return Response(
+                {'old_password': 'Incorrect password'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+        return Response({'detail': 'Password changed successfully'})
     
     @action(detail=False, methods=['post'])
     def register(self, request):

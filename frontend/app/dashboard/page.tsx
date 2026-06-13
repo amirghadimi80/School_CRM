@@ -74,32 +74,32 @@ export default function DashboardPage() {
       title: 'دانش‌آموزان',
       value: stats.totalStudents,
       icon: Users,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'text-info',
+      bgColor: 'bg-info-muted',
       link: '/students',
     },
     {
       title: 'معلمان',
       value: stats.totalTeachers,
       icon: GraduationCap,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      color: 'text-success',
+      bgColor: 'bg-success-muted',
       link: '/teachers',
     },
     {
       title: 'کلاس‌ها',
       value: stats.totalClasses,
       icon: BookOpen,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      color: 'text-violet',
+      bgColor: 'bg-violet-muted',
       link: '/classes',
     },
     {
       title: 'نرخ حضور',
       value: `${stats.attendanceRate}%`,
       icon: Clock,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50',
+      color: 'text-warning',
+      bgColor: 'bg-warning-muted',
       link: '/attendance',
       showProgress: true,
       progress: stats.attendanceRate,
@@ -122,39 +122,37 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">داشبورد</h1>
+            <h1 className="text-2xl font-bold tracking-tight">داشبورد</h1>
             <p className="text-muted-foreground">نمای کلی مدرسه</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Calendar className="h-4 w-4 ml-2" />
-              امروز: {new Date().toLocaleDateString('fa-IR')}
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" className="rounded-xl border-border/60 bg-card/80 shadow-sm">
+            <Calendar className="h-4 w-4 ml-2" />
+            امروز: {new Date().toLocaleDateString('fa-IR')}
+          </Button>
         </div>
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {statCards.map((stat) => (
             <Link key={stat.title} href={stat.link}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-6">
+              <div className="stat-card cursor-pointer">
+                <div className="p-6">
                   <div className="flex items-center justify-between space-y-0">
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <p className="text-sm font-medium text-muted-foreground">
                         {stat.title}
                       </p>
-                      <p className="text-2xl font-bold">{stat.value}</p>
+                      <p className="text-2xl font-bold tracking-tight">{stat.value}</p>
                       {stat.showProgress && (
-                        <Progress value={stat.progress} className="h-2" />
+                        <Progress value={stat.progress} className="h-1.5" />
                       )}
                     </div>
-                    <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                    <div className={`stat-icon-wrap ${stat.bgColor}`}>
                       <stat.icon className={`h-6 w-6 ${stat.color}`} />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </Link>
           ))}
         </div>
@@ -171,19 +169,19 @@ export default function DashboardPage() {
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">درآمد این ماه</span>
-                <span className="font-bold text-green-600">
+                <span className="font-bold text-success">
                   {formatCurrency(stats.monthlyRevenue)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">مطالبات معوق</span>
-                <span className="font-bold text-red-600">
+                <span className="font-bold text-destructive">
                   {formatCurrency(stats.pendingPayments)}
                 </span>
               </div>
-              <div className="flex justify-between items-center pt-4 border-t">
+              <div className="flex justify-between items-center rounded-xl bg-secondary/50 px-4 py-3">
                 <span className="font-medium">موجودی کل</span>
-                <span className="font-bold text-lg">
+                <span className="text-lg font-bold">
                   {formatCurrency(stats.monthlyRevenue - stats.pendingPayments)}
                 </span>
               </div>
@@ -199,22 +197,22 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 mt-2 rounded-full bg-red-500" />
+                <div className="flex items-start gap-3 rounded-xl bg-destructive/5 p-3">
+                  <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-destructive" />
                   <div>
                     <p className="text-sm font-medium">غیبت متوالی</p>
                     <p className="text-xs text-muted-foreground">3 دانش‌آموز بیش از 3 روز غیبت دارند</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 mt-2 rounded-full bg-amber-500" />
+                <div className="flex items-start gap-3 rounded-xl bg-warning-muted p-3">
+                  <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-warning" />
                   <div>
                     <p className="text-sm font-medium">پرداخت معوق</p>
                     <p className="text-xs text-muted-foreground">12 دانش‌آموز شهریه پرداخت نکرده‌اند</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 mt-2 rounded-full bg-blue-500" />
+                <div className="flex items-start gap-3 rounded-xl bg-info-muted p-3">
+                  <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-info" />
                   <div>
                     <p className="text-sm font-medium">امتحانات پیش‌رو</p>
                     <p className="text-xs text-muted-foreground">امتحان نیمسال اول در 2 هفته آینده</p>

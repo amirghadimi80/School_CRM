@@ -45,6 +45,31 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        sidebar: {
+          DEFAULT: 'hsl(var(--sidebar))',
+          foreground: 'hsl(var(--sidebar-foreground))',
+          border: 'hsl(var(--sidebar-border))',
+        },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          muted: 'hsl(var(--success-muted))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          muted: 'hsl(var(--warning-muted))',
+        },
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          muted: 'hsl(var(--info-muted))',
+        },
+        violet: {
+          DEFAULT: 'hsl(var(--violet))',
+          muted: 'hsl(var(--violet-muted))',
+        },
+      },
+      boxShadow: {
+        soft: '0 2px 8px -2px hsl(226 72% 46% / 0.08), 0 4px 16px -4px hsl(222 47% 11% / 0.06)',
+        card: '0 1px 3px hsl(222 47% 11% / 0.04), 0 4px 12px -2px hsl(222 47% 11% / 0.06)',
       },
       borderRadius: {
         lg: 'var(--radius)',

@@ -41,6 +41,8 @@ class IsOwnerOrAdmin(permissions.BasePermission):
         if user.is_school_admin:
             return True
         # Allow owners
+        if obj == user:
+            return True
         return hasattr(obj, 'user') and obj.user == user
 
 

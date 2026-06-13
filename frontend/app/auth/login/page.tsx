@@ -4,11 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, GraduationCap } from 'lucide-react';
+import { AuthLayout } from '@/components/auth/auth-layout';
+import { AuthField } from '@/components/auth/auth-field';
+import { Loader2, Lock, Mail, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -37,14 +36,11 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
-      
-      // Store tokens
+
       localStorage.setItem('access_token', data.access);
       localStorage.setItem('refresh_token', data.refresh);
       localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // The API returns `school` as the school id; older payloads may nest it
-      // as an object, so support both shapes.
+
       const schoolId =
         typeof data.user?.school === 'object'
           ? data.user?.school?.id
@@ -53,14 +49,12 @@ export default function LoginPage() {
         localStorage.setItem('school_id', String(schoolId));
       }
 
-      // Redirect based on role
       const role = data.user.role;
       if (role === 'teacher') {
         router.push('/teacher/dashboard');
       } else if (role === 'student') {
         router.push('/student/dashboard');
       } else {
-        // admin, school_admin, etc.
         router.push('/dashboard');
       }
     } catch (err: unknown) {
@@ -72,68 +66,85 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4" dir="rtl">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <GraduationCap className="h-10 w-10 text-primary" />
-            </div>
+    <AuthLayout
+      title="خوش آمدید"
+      subtitle="برای دسترسی به پنل، وارد حساب کاربری خود شوید"
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && (
+          <Alert variant="destructive" className="border-red-200 bg-red-50">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <AuthField
+          label="ایمیل یا کد ملی"
+          id="email"
+          icon={Mail}
+          type="text"
+          placeholder="example@school.com یا ۱۲۳۴۵۶۷۸۹۰"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="username"
+        />
+
+        <AuthField
+          label="رمز عبور"
+          id="password"
+          icon={Lock}
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="current-password"
+        />
+
+        <div className="flex items-center justify-end">
+          <Link
+            href="/auth/forgot-password"
+            className="text-sm text-primary transition-colors hover:text-primary/80"
+          >
+            رمز عبور را فراموش کرده‌اید؟
+          </Link>
+        </div>
+
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="h-11 w-full bg-gradient-to-l from-blue-600 to-blue-700 text-base font-semibold shadow-md shadow-blue-200/50 transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-lg"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              در حال ورود...
+            </>
+          ) : (
+            'ورود به سامانه'
+          )}
+        </Button>
+
+        <div className="relative py-2">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-slate-200" />
           </div>
-          <CardTitle className="text-2xl font-bold">سیستم مدیریت مدرسه</CardTitle>
-          <CardDescription>
-            برای دسترسی به پنل مدیریت وارد شوید
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email">ایمیل یا کد ملی</Label>
-              <Input
-                id="email"
-                type="text"
-                placeholder="example@school.com یا ۱۲۳۴۵۶۷۸۹۰"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">رمز عبور</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  در حال ورود...
-                </>
-              ) : (
-                'ورود'
-              )}
-            </Button>
-            <div className="text-sm text-muted-foreground text-center">
-              <Link href="/auth/forgot-password" className="hover:underline">
-                رمز عبور را فراموش کرده‌اید؟
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-3 text-muted-foreground">یا</span>
+          </div>
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground">
+          حساب کاربری ندارید؟{' '}
+          <Link
+            href="/auth/register"
+            className="inline-flex items-center gap-1 font-semibold text-primary transition-colors hover:text-primary/80"
+          >
+            ثبت‌نام کنید
+            <ArrowLeft className="h-3.5 w-3.5" />
+          </Link>
+        </p>
+      </form>
+    </AuthLayout>
   );
 }
