@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   LayoutDashboard,
   Users,
+  GraduationCap,
   BookOpen,
   Calendar,
   Wallet,
