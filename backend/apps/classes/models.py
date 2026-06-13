@@ -149,6 +149,16 @@ class Class(BaseModel):
     """
     Class/Classroom model (e.g., "10-A", "11-B").
     """
+    BRANCH_MATH = 'math'
+    BRANCH_SCIENCE = 'science'
+    BRANCH_HUMANITIES = 'humanities'
+
+    BRANCH_CHOICES = [
+        (BRANCH_MATH, _('Mathematics')),
+        (BRANCH_SCIENCE, _('Science')),
+        (BRANCH_HUMANITIES, _('Humanities')),
+    ]
+
     name = models.CharField(
         max_length=100,
         verbose_name=_('Class Name'),
@@ -159,6 +169,15 @@ class Class(BaseModel):
         max_length=20,
         verbose_name=_('Grade Level'),
         help_text=_('e.g., 10, 11, 12')
+    )
+
+    branch = models.CharField(
+        max_length=20,
+        choices=BRANCH_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name=_('Branch'),
+        help_text=_('Only for high school (grades 10-12)')
     )
     
     # Room

@@ -122,9 +122,9 @@ class PasswordChangeSerializer(serializers.Serializer):
 
 class LoginSerializer(serializers.Serializer):
     """
-    Serializer for login.
+    Serializer for login (email or 10-digit national ID for students).
     """
-    email = serializers.EmailField(required=True)
+    email = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True)
     school_id = serializers.UUIDField(required=False, allow_null=True)
 

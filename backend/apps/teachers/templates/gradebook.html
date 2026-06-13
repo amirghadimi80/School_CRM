@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page { size: A4 landscape; margin: 1.5cm; }
+    body {
+      font-family: Tahoma, Arial, sans-serif;
+      font-size: 11px;
+      direction: rtl;
+      color: #111;
+    }
+    h1 {
+      text-align: center;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 12px;
+      color: #444;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin-bottom: 28px;
+      page-break-inside: avoid;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: bold;
+      border-bottom: 2px solid #333;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+    .meta {
+      font-size: 10px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 5px 6px;
+      text-align: center;
+    }
+    th {
+      background: #f0f0f0;
+      font-weight: bold;
+    }
+    td.name-cell { text-align: right; }
+    .empty-cell { min-height: 18px; }
+  </style>
+</head>
+<body>
+  <h1>دفتر کلاسی</h1>
+  <div class="subtitle">{{ teacher_name }} — سال تحصیلی {{ academic_year }}</div>
+
+  {% for section in sections %}
+  <div class="section">
+    <div class="section-title">{{ section.course_name }} — {{ section.class_name }}</div>
+    <div class="meta">
+      پایه: {{ section.grade_level }}
+      {% if section.branch_display %} | رشته: {{ section.branch_display }}{% endif %}
+      | تعداد دانش‌آموز: {{ section.student_count }}
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:4%">ردیف</th>
+          <th style="width:10%">کد</th>
+          <th style="width:28%">نام و نام خانوادگی</th>
+          <th style="width:12%">مستمر</th>
+          <th style="width:12%">میان‌ترم</th>
+          <th style="width:12%">پایان‌ترم</th>
+          <th style="width:10%">جمع</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in section.students %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ student.student_code }}</td>
+          <td class="name-cell">{{ student.full_name }}</td>
+          <td class="empty-cell"></td>
+          <td class="empty-cell"></td>
+          <td class="empty-cell"></td>
+          <td class="empty-cell"></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">دانش‌آموزی در این کلاس ثبت نشده است.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% empty %}
+  <p style="text-align:center;">تخصیص درسی برای این معلم یافت نشد.</p>
+  {% endfor %}
+</body>
+</html>

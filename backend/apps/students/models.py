@@ -60,6 +60,8 @@ class Student(BaseModel):
     )
     grade_level = models.CharField(
         max_length=20,
+        blank=True,
+        default='',
         verbose_name=_('Grade Level'),
         help_text=_('e.g., 10, 11, 12 for high school')
     )
@@ -110,6 +112,20 @@ class Student(BaseModel):
         blank=True,
         verbose_name=_('Guardian Relationship'),
         help_text=_('e.g., Father, Mother, Uncle')
+    )
+    father_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name=_('Father Phone')
+    )
+    mother_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name=_('Mother Phone')
+    )
+    profile_completed = models.BooleanField(
+        default=False,
+        verbose_name=_('Profile Completed')
     )
     
     # Additional info
@@ -194,6 +210,7 @@ class StudentDocument(BaseModel):
             ('medical', _('Medical Record')),
             ('photo', _('Photo')),
             ('id_card', _('ID Card')),
+            ('registration', _('Registration')),
             ('other', _('Other')),
         ],
         verbose_name=_('Document Type')

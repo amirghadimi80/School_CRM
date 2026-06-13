@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { PlatformBrand } from '@/components/layout/platform-brand';
+import { useSessionInfo } from '@/hooks/use-session-info';
 import {
   LayoutDashboard,
   Calendar,
@@ -35,6 +37,7 @@ export function StudentLayout({ children }: StudentLayoutProps) {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [studentName, setStudentName] = useState('دانش‌آموز');
+  const { schoolName } = useSessionInfo();
 
   useEffect(() => {
     const user = localStorage.getItem('user');
@@ -62,14 +65,9 @@ export function StudentLayout({ children }: StudentLayoutProps) {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-white border-l border-gray-200 fixed right-0 top-0 bottom-0 z-40">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <img src="/images/logo.png" alt="سپاد" className="h-10 w-10 object-contain" />
-            <div>
-              <h1 className="font-bold text-lg">پنل دانش‌آموز</h1>
-              <p className="text-xs text-gray-500">{studentName}</p>
-            </div>
-          </div>
+        <div className="border-b border-gray-200 p-4">
+          <PlatformBrand schoolName={schoolName} />
+          <p className="mt-2 truncate text-xs text-gray-500">{studentName}</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -108,10 +106,7 @@ export function StudentLayout({ children }: StudentLayoutProps) {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/images/logo.png" alt="سپاد" className="h-8 w-8 object-contain" />
-            <span className="font-bold">پنل دانش‌آموز</span>
-          </div>
+          <PlatformBrand schoolName={schoolName} titleClassName="text-xs" />
           <Button
             variant="ghost"
             size="sm"

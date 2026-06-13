@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { PlatformBrand } from '@/components/layout/platform-brand';
+import { useSessionInfo } from '@/hooks/use-session-info';
 import {
   LayoutDashboard,
   Calendar,
@@ -38,6 +40,7 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [teacherName, setTeacherName] = useState('معلم');
+  const { schoolName } = useSessionInfo();
 
   useEffect(() => {
     const user = localStorage.getItem('user');
@@ -66,14 +69,9 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-white border-l border-gray-200 fixed right-0 top-0 bottom-0 z-40">
         <Link href="/teacher/dashboard" className="block">
-        <div className="p-6 border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
-          <div className="flex items-center gap-3">
-            <img src="/images/logo.png" alt="سپاد" className="h-10 w-10 object-contain" />
-            <div>
-              <h1 className="font-bold text-lg">پنل معلم</h1>
-              <p className="text-xs text-gray-500">{teacherName}</p>
-            </div>
-          </div>
+        <div className="border-b border-gray-200 p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+          <PlatformBrand schoolName={schoolName} />
+          <p className="mt-2 truncate text-xs text-gray-500">{teacherName}</p>
         </div>
         </Link>
 
@@ -113,10 +111,7 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/images/logo.png" alt="سپاد" className="h-8 w-8 object-contain" />
-            <span className="font-bold">پنل معلم</span>
-          </div>
+          <PlatformBrand schoolName={schoolName} titleClassName="text-xs" />
           <Button
             variant="ghost"
             size="sm"

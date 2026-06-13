@@ -49,6 +49,7 @@ export default function StudentDashboardPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<StudentDashboardData | null>(null);
+  const [profileIncomplete, setProfileIncomplete] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -62,8 +63,14 @@ export default function StudentDashboardPage() {
 
   const loadDashboard = async () => {
     try {
-      const response = await api.get<StudentDashboardData>('/users/student/dashboard/dashboard/');
-      setData(response.data);
+      const [dashboardRes, profileRes] = await Promise.all([
+        api.get<StudentDashboardData>('/users/student/dashboard/dashboard/'),
+        api.getStudentMe().catch(() => null),
+      ]);
+      setData(dashboardRes.data);
+      if (profileRes && typeof profileRes === 'object' && 'profile_completed' in profileRes) {
+        setProfileIncomplete(!profileRes.profile_completed);
+      }
     } catch (error) {
       toast({
         title: 'خطا',
@@ -109,6 +116,18 @@ export default function StudentDashboardPage() {
             </p>
           </div>
         </div>
+
+        {profileIncomplete && (
+          <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" />
+              <span>لطفاً اطلاعات پروفایل خود را تکمیل کنید.</span>
+            </div>
+            <Link href="/student/profile">
+              <Button size="sm" variant="outline">تکمیل پروفایل</Button>
+            </Link>
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

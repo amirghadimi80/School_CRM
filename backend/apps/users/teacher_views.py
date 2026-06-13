@@ -8,6 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from apps.common.permissions import IsTeacher
+from apps.common.middleware.tenant import get_current_tenant
 from apps.teachers.models import TeacherAssignment
 from apps.schools.models import GeneratedSchedule
 from apps.attendance.models import Attendance
@@ -19,12 +20,19 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
     ViewSet for teacher dashboard and operations.
     """
     permission_classes = [permissions.IsAuthenticated, IsTeacher]
+
+    def _get_academic_year(self, request):
+        school = get_current_tenant()
+        if school and school.current_academic_year:
+            return school.current_academic_year
+        return request.query_params.get('academic_year', str(timezone.now().year))
     
     @action(detail=False, methods=['get'])
     def dashboard(self, request):
         """Get teacher dashboard data."""
         teacher = request.user.teacher_profile
         today = timezone.now().date()
+        academic_year = self._get_academic_year(request)
         
         # Today's classes from schedule
         today_classes = GeneratedSchedule.objects.filter(
@@ -36,7 +44,7 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         # Get unique classes for this teacher
         teacher_assignments = TeacherAssignment.objects.filter(
             teacher=teacher,
-            academic_year=str(today.year)
+            academic_year=academic_year
         ).select_related('class_assigned', 'course')
         
         classes_data = []
@@ -122,10 +130,11 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
     def classes(self, request):
         """Get teacher's assigned classes."""
         teacher = request.user.teacher_profile
+        academic_year = self._get_academic_year(request)
         
         assignments = TeacherAssignment.objects.filter(
             teacher=teacher,
-            academic_year=str(timezone.now().year)
+            academic_year=academic_year
         ).select_related('class_assigned', 'course')
         
         classes_data = []

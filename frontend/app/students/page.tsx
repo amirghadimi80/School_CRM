@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, Plus, Search, Eye, GraduationCap, Phone, Mail, Wallet, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { Users, Plus, Search, Eye, GraduationCap, Phone, Mail, Wallet, ArrowDownLeft, ArrowUpRight, RefreshCw, Upload, ImageIcon, User, FolderOpen } from 'lucide-react';
+import { FormSection } from '@/components/students/form-section';
 import { useToast } from '@/hooks/use-toast';
+import api from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -62,15 +64,53 @@ interface Student {
   payments: Payment[];
 }
 
+interface ApiStudent {
+  id: number;
+  student_code: string;
+  full_name: string;
+  email?: string;
+  phone?: string;
+  grade_level: string;
+  class_name?: string | null;
+  status: string;
+}
+
+function mapApiStudent(student: ApiStudent): Student {
+  const nameParts = student.full_name.trim().split(/\s+/);
+  return {
+    id: student.id,
+    firstName: nameParts[0] || '',
+    lastName: nameParts.slice(1).join(' ') || '',
+    studentCode: student.student_code,
+    gradeLevel: student.grade_level,
+    className: student.class_name || '—',
+    status: student.status,
+    phone: student.phone,
+    email: student.email,
+    balance: 0,
+    invoices: [],
+    payments: [],
+  };
+}
 const GRADE_LEVELS = ['اول', 'دوم', 'سوم', 'چهارم', 'پنجم', 'ششم', 'هفتم', 'هشتم', 'نهم', 'دهم', 'یازدهم', 'دوازدهم'];
-const CLASS_NAMES = ['101', '102', '103', '201', '202', '203', '301', '302', '303'];
 const FEE_TYPES = ['شهریه', 'ثبت‌نام', 'کتاب', ' uniform', 'بلیط', 'آزمون', 'سایر'];
+
+interface ClassOption {
+  id: number;
+  name: string;
+}
 
 export default function StudentsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [students, setStudents] = useState<Student[]>([]);
+  const [classes, setClasses] = useState<ClassOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [registrationFiles, setRegistrationFiles] = useState<File[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -81,14 +121,54 @@ export default function StudentsPage() {
   const [newStudent, setNewStudent] = useState({
     firstName: '',
     lastName: '',
+    nationalId: '',
     studentCode: '',
     gradeLevel: '',
-    className: '',
+    classId: '',
     phone: '',
-    email: '',
+    fatherPhone: '',
+    motherPhone: '',
     birthDate: '',
-    address: '',
   });
+
+  const resetNewStudentForm = () => {
+    setNewStudent({
+      firstName: '', lastName: '', nationalId: '', studentCode: '',
+      gradeLevel: '', classId: '', phone: '', fatherPhone: '', motherPhone: '', birthDate: '',
+    });
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    setRegistrationFiles([]);
+  };
+
+  const handleNationalIdChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 10);
+    setNewStudent((prev) => ({ ...prev, nationalId: digits, studentCode: digits }));
+  };
+
+  const handleGenerateCode = async () => {
+    setIsGeneratingCode(true);
+    try {
+      const res = await api.generateStudentCode();
+      handleNationalIdChange(res.national_id);
+    } catch {
+      toast({ title: 'خطا', description: 'تولید کد ناموفق بود', variant: 'destructive' });
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleRegistrationFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length) setRegistrationFiles((prev) => [...prev, ...files]);
+  };
 
   const [newInvoice, setNewInvoice] = useState({
     feeType: '',
@@ -104,6 +184,12 @@ export default function StudentsPage() {
     description: '',
   });
 
+  const loadStudents = async () => {
+    const response = await api.getStudents({ status: 'active' });
+    const list = Array.isArray(response) ? response : response.results || [];
+    setStudents(list.map((item: ApiStudent) => mapApiStudent(item)));
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -111,68 +197,26 @@ export default function StudentsPage() {
       return;
     }
 
-    setStudents([
-      { 
-        id: 1, 
-        firstName: 'علی', 
-        lastName: 'احمدی', 
-        studentCode: 'STD001', 
-        gradeLevel: 'دهم', 
-        className: '101', 
-        status: 'active', 
-        phone: '09123456789', 
-        email: 'ali@example.com', 
-        birthDate: '1385/01/15', 
-        address: 'تهران، خیابان آزادی',
-        balance: -2500000,
-        invoices: [
-          { id: 1, invoiceNumber: 'INV-001', amount: 3000000, paidAmount: 500000, status: 'partial', feeType: 'شهریه', issueDate: '1403/01/01', dueDate: '1403/01/15' },
-        ],
-        payments: [
-          { id: 1, amount: 500000, paymentDate: '1403/01/10', paymentMethod: 'کارت به کارت', reference: '12345' },
-        ],
-      },
-      { 
-        id: 2, 
-        firstName: 'مریم', 
-        lastName: 'رضایی', 
-        studentCode: 'STD002', 
-        gradeLevel: 'یازدهم', 
-        className: '201', 
-        status: 'active', 
-        phone: '09129876543', 
-        email: 'maryam@example.com', 
-        birthDate: '1384/05/20', 
-        address: 'تهران، خیابان انقلاب',
-        balance: 0,
-        invoices: [
-          { id: 2, invoiceNumber: 'INV-002', amount: 3500000, paidAmount: 3500000, status: 'paid', feeType: 'شهریه', issueDate: '1403/01/01', dueDate: '1403/01/15' },
-        ],
-        payments: [
-          { id: 2, amount: 3500000, paymentDate: '1403/01/05', paymentMethod: 'نقدی', reference: '12346' },
-        ],
-      },
-      { 
-        id: 3, 
-        firstName: 'حسن', 
-        lastName: 'محمدی', 
-        studentCode: 'STD003', 
-        gradeLevel: 'دوازدهم', 
-        className: '301', 
-        status: 'active', 
-        phone: '09121234567', 
-        email: 'hasan@example.com', 
-        birthDate: '1383/11/10', 
-        address: 'تهران، خیابان ولیعصر',
-        balance: -4000000,
-        invoices: [
-          { id: 3, invoiceNumber: 'INV-003', amount: 4000000, paidAmount: 0, status: 'pending', feeType: 'شهریه', issueDate: '1403/01/01', dueDate: '1403/01/15' },
-        ],
-        payments: [],
-      },
-    ]);
-    setIsLoading(false);
-  }, [router]);
+    const load = async () => {
+      try {
+        await loadStudents();
+      } catch {
+        toast({ title: 'خطا', description: 'بارگذاری دانش‌آموزان ناموفق بود', variant: 'destructive' });
+      }
+
+      try {
+        const classesRes = await api.getClasses();
+        const classList = Array.isArray(classesRes) ? classesRes : classesRes.results || [];
+        setClasses(classList.map((c: ClassOption) => ({ id: c.id, name: c.name })));
+      } catch {
+        // کلاس‌ها اختیاری‌اند
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    load();
+  }, [router, toast]);
 
   const filteredStudents = students.filter(s => 
     s.firstName.includes(searchQuery) || 
@@ -180,25 +224,51 @@ export default function StudentsPage() {
     s.studentCode.includes(searchQuery)
   );
 
-  const handleAddStudent = () => {
-    if (!newStudent.firstName || !newStudent.lastName || !newStudent.studentCode) {
-      toast({ title: 'خطا', description: 'لطفاً نام، نام خانوادگی و کد دانش‌آموزی را وارد کنید', variant: 'destructive' });
+  const handleAddStudent = async () => {
+    if (!newStudent.firstName || !newStudent.lastName || !newStudent.nationalId) {
+      toast({ title: 'خطا', description: 'نام، نام خانوادگی و کد ملی الزامی است', variant: 'destructive' });
       return;
     }
-    
-    const student: Student = {
-      id: students.length + 1,
-      ...newStudent,
-      status: 'active',
-      balance: 0,
-      invoices: [],
-      payments: [],
-    };
-    
-    setStudents([...students, student]);
-    setIsAddDialogOpen(false);
-    setNewStudent({ firstName: '', lastName: '', studentCode: '', gradeLevel: '', className: '', phone: '', email: '', birthDate: '', address: '' });
-    toast({ title: 'موفق', description: 'دانش‌آموز با موفقیت اضافه شد' });
+    if (newStudent.nationalId.length !== 10) {
+      toast({ title: 'خطا', description: 'کد ملی باید ۱۰ رقم باشد', variant: 'destructive' });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const created = await api.createStudent({
+        first_name: newStudent.firstName,
+        last_name: newStudent.lastName,
+        national_id: newStudent.nationalId,
+        ...(newStudent.birthDate ? { birth_date: newStudent.birthDate } : {}),
+        phone: newStudent.phone,
+        father_phone: newStudent.fatherPhone,
+        mother_phone: newStudent.motherPhone,
+        ...(newStudent.gradeLevel ? { grade_level: newStudent.gradeLevel } : {}),
+        ...(newStudent.classId ? { current_class: Number(newStudent.classId) } : {}),
+      });
+
+      if (avatarFile) {
+        await api.uploadStudentAvatar(created.id, avatarFile);
+      }
+      for (const file of registrationFiles) {
+        await api.uploadStudentDocument(created.id, file);
+      }
+
+      await loadStudents();
+      setIsAddDialogOpen(false);
+      resetNewStudentForm();
+      toast({ title: 'موفق', description: 'دانش‌آموز با موفقیت اضافه شد' });
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: Record<string, string[] | string> } })?.response?.data;
+      const msg = typeof data?.national_id === 'object' ? data.national_id[0]
+        : typeof data?.student_code === 'object' ? data.student_code[0]
+        : typeof data?.detail === 'string' ? data.detail
+        : 'افزودن دانش‌آموز ناموفق بود';
+      toast({ title: 'خطا', description: msg, variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleViewStudent = (student: Student) => {
@@ -335,62 +405,148 @@ export default function StudentsPage() {
                 دانش‌آموز جدید
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>افزودن دانش‌آموز جدید</DialogTitle>
-                <DialogDescription>اطلاعات دانش‌آموز را وارد کنید</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">نام</Label>
-                    <Input id="firstName" value={newStudent.firstName} onChange={(e) => setNewStudent({...newStudent, firstName: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">نام خانوادگی</Label>
-                    <Input id="lastName" value={newStudent.lastName} onChange={(e) => setNewStudent({...newStudent, lastName: e.target.value})} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="studentCode">کد دانش‌آموزی</Label>
-                  <Input id="studentCode" value={newStudent.studentCode} onChange={(e) => setNewStudent({...newStudent, studentCode: e.target.value})} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>پایه تحصیلی</Label>
-                    <Select value={newStudent.gradeLevel} onValueChange={(value) => setNewStudent({...newStudent, gradeLevel: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="انتخاب کنید" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {GRADE_LEVELS.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>کلاس</Label>
-                    <Select value={newStudent.className} onValueChange={(value) => setNewStudent({...newStudent, className: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="انتخاب کنید" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CLASS_NAMES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">شماره تماس</Label>
-                  <Input id="phone" value={newStudent.phone} onChange={(e) => setNewStudent({...newStudent, phone: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">ایمیل</Label>
-                  <Input id="email" type="email" value={newStudent.email} onChange={(e) => setNewStudent({...newStudent, email: e.target.value})} />
-                </div>
+            <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto border-0 p-0 gap-0">
+              <div className="rounded-t-lg bg-gradient-to-l from-primary/10 via-blue-50 to-indigo-50 px-6 py-5 border-b border-blue-100/80">
+                <DialogHeader className="space-y-1 text-right">
+                  <DialogTitle className="text-xl text-slate-800">افزودن دانش‌آموز جدید</DialogTitle>
+                  <DialogDescription className="text-slate-600">
+                    فقط نام، نام خانوادگی و کد ملی الزامی است. بقیه اطلاعات را می‌توانید بعداً یا توسط خود دانش‌آموز تکمیل کنید.
+                  </DialogDescription>
+                </DialogHeader>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>انصراف</Button>
-                <Button onClick={handleAddStudent}>ذخیره</Button>
+              <div className="grid gap-4 px-6 py-5">
+                <FormSection title="اطلاعات هویتی" icon={User} accent="blue">
+                  <div className="grid gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName" className="text-slate-700">نام *</Label>
+                        <Input id="firstName" className="border-blue-100 bg-white/80 focus-visible:ring-blue-300" value={newStudent.firstName} onChange={(e) => setNewStudent({ ...newStudent, firstName: e.target.value })} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName" className="text-slate-700">نام خانوادگی *</Label>
+                        <Input id="lastName" className="border-blue-100 bg-white/80 focus-visible:ring-blue-300" value={newStudent.lastName} onChange={(e) => setNewStudent({ ...newStudent, lastName: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nationalId" className="text-slate-700">کد ملی *</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="nationalId"
+                            inputMode="numeric"
+                            maxLength={10}
+                            value={newStudent.nationalId}
+                            onChange={(e) => handleNationalIdChange(e.target.value)}
+                            placeholder="۱۰ رقم"
+                            className="border-blue-100 bg-white/80 focus-visible:ring-blue-300"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={handleGenerateCode}
+                            disabled={isGeneratingCode}
+                            title="تولید کد یکتا"
+                            className="shrink-0 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+                          >
+                            <RefreshCw className={`h-4 w-4 ${isGeneratingCode ? 'animate-spin' : ''}`} />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="studentCode" className="text-slate-700">کد دانش‌آموزی</Label>
+                        <Input id="studentCode" value={newStudent.studentCode} readOnly className="border-indigo-100 bg-indigo-50/70 font-medium text-indigo-900" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="birthDate" className="text-slate-700">تاریخ تولد</Label>
+                      <Input id="birthDate" type="date" className="border-blue-100 bg-white/80 focus-visible:ring-blue-300" value={newStudent.birthDate} onChange={(e) => setNewStudent({ ...newStudent, birthDate: e.target.value })} />
+                    </div>
+                  </div>
+                </FormSection>
+
+                <FormSection title="اطلاعات تماس" icon={Phone} accent="emerald">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-slate-700">موبایل دانش‌آموز</Label>
+                      <Input id="phone" className="border-emerald-100 bg-white/80 focus-visible:ring-emerald-300" value={newStudent.phone} onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="fatherPhone" className="text-slate-700">موبایل پدر</Label>
+                      <Input id="fatherPhone" className="border-emerald-100 bg-white/80 focus-visible:ring-emerald-300" value={newStudent.fatherPhone} onChange={(e) => setNewStudent({ ...newStudent, fatherPhone: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="motherPhone" className="text-slate-700">موبایل مادر</Label>
+                      <Input id="motherPhone" className="border-emerald-100 bg-white/80 focus-visible:ring-emerald-300" value={newStudent.motherPhone} onChange={(e) => setNewStudent({ ...newStudent, motherPhone: e.target.value })} />
+                    </div>
+                  </div>
+                </FormSection>
+
+                <FormSection title="اطلاعات تحصیلی (اختیاری)" icon={GraduationCap} accent="violet">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700">پایه تحصیلی</Label>
+                      <Select value={newStudent.gradeLevel} onValueChange={(value) => setNewStudent({ ...newStudent, gradeLevel: value })}>
+                        <SelectTrigger className="border-violet-100 bg-white/80"><SelectValue placeholder="انتخاب کنید" /></SelectTrigger>
+                        <SelectContent>
+                          {GRADE_LEVELS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700">کلاس</Label>
+                      <Select value={newStudent.classId} onValueChange={(value) => setNewStudent({ ...newStudent, classId: value })}>
+                        <SelectTrigger className="border-violet-100 bg-white/80"><SelectValue placeholder={classes.length ? 'انتخاب کنید' : 'کلاسی تعریف نشده'} /></SelectTrigger>
+                        <SelectContent>
+                          {classes.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </FormSection>
+
+                <FormSection title="پرونده ثبت‌نام" icon={FolderOpen} accent="amber">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700">عکس پرسنلی ۳×۴</Label>
+                      <div className="flex items-start gap-4">
+                        <div className="flex h-28 w-[84px] items-center justify-center overflow-hidden rounded-lg border-2 border-amber-200 bg-amber-50/50 shadow-inner">
+                          {avatarPreview ? (
+                            <img src={avatarPreview} alt="پیش‌نمایش" className="h-full w-full object-cover" />
+                          ) : (
+                            <ImageIcon className="h-8 w-8 text-amber-400" />
+                          )}
+                        </div>
+                        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2 text-sm text-amber-900 transition-colors hover:bg-amber-100">
+                          <Upload className="h-4 w-4" />
+                          انتخاب عکس
+                          <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700">فایل‌های ثبت‌نام</Label>
+                      <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-amber-200 bg-amber-50/40 px-3 py-6 text-sm text-amber-900 transition-colors hover:border-amber-300 hover:bg-amber-50">
+                        <Upload className="h-5 w-5 text-amber-500" />
+                        آپلود فایل (چند فایل)
+                        <input type="file" multiple className="hidden" onChange={handleRegistrationFilesChange} />
+                      </label>
+                      {registrationFiles.length > 0 && (
+                        <ul className="space-y-1 rounded-md bg-white/70 p-2 text-xs text-amber-900/80">
+                          {registrationFiles.map((f, i) => (
+                            <li key={`${f.name}-${i}`} className="truncate">• {f.name}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </FormSection>
+              </div>
+              <DialogFooter className="border-t border-slate-100 bg-slate-50/80 px-6 py-4">
+                <Button variant="outline" className="border-slate-200" onClick={() => { setIsAddDialogOpen(false); resetNewStudentForm(); }}>انصراف</Button>
+                <Button onClick={handleAddStudent} disabled={isSaving} className="bg-gradient-to-l from-primary to-blue-600 shadow-md hover:from-primary/90 hover:to-blue-600/90">
+                  {isSaving ? 'در حال ذخیره...' : 'ذخیره دانش‌آموز'}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -413,6 +569,10 @@ export default function StudentsPage() {
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">در حال بارگذاری...</div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                هنوز دانش‌آموزی ثبت نشده است
+              </div>
             ) : (
               <div className="divide-y">
                 {filteredStudents.map((student) => (
