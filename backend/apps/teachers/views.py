@@ -36,6 +36,7 @@ class TeacherViewSet(
     serializer_class = TeacherListSerializer
     permission_classes = [permissions.IsAuthenticated, IsSchoolMember]
     lookup_field = 'id'
+    lookup_value_regex = r'[0-9]+'
 
     def get_queryset(self):
         school = get_current_tenant()

@@ -74,6 +74,27 @@ class UserSerializer(serializers.ModelSerializer):
         }
     
     school_name = serializers.CharField(source='school.name', read_only=True)
+
+    def validate(self, attrs):
+        """Block privilege escalation through the generic user update API."""
+        request = self.context.get('request')
+        actor = getattr(request, 'user', None)
+        is_admin = bool(actor and actor.is_authenticated and actor.is_school_admin)
+        is_super = bool(actor and actor.is_authenticated and actor.is_super_admin)
+
+        if 'role' in attrs:
+            if not is_admin:
+                raise serializers.ValidationError({'role': 'You cannot change this field.'})
+            if attrs['role'] == User.ROLE_SUPER_ADMIN and not is_super:
+                raise serializers.ValidationError({'role': 'You cannot assign this role.'})
+            valid_roles = {choice for choice, _label in User.ROLE_CHOICES}
+            if attrs['role'] not in valid_roles:
+                raise serializers.ValidationError({'role': 'Invalid role.'})
+
+        if any(field in attrs for field in ('is_active', 'school')) and not is_admin:
+            raise serializers.ValidationError({'detail': 'You cannot change this field.'})
+
+        return attrs
     
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile', None)
@@ -115,10 +136,22 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password": "Passwords don't match"})
+        request = self.context.get('request')
+        actor = getattr(request, 'user', None)
+        role = attrs.get('role', User.ROLE_STUDENT)
+        valid_roles = {choice for choice, _label in User.ROLE_CHOICES}
+        if role not in valid_roles:
+            raise serializers.ValidationError({'role': 'Invalid role.'})
+        if actor and actor.is_authenticated and not actor.is_super_admin:
+            if role == User.ROLE_SUPER_ADMIN:
+                raise serializers.ValidationError({'role': 'You cannot assign this role.'})
         return attrs
-    
+
     def create(self, validated_data):
         validated_data.pop('password_confirm')
+        role = validated_data.get('role', User.ROLE_STUDENT)
+        if role not in {choice for choice, _label in User.ROLE_CHOICES}:
+            raise serializers.ValidationError({'role': 'Invalid role.'})
         user = User.objects.create_user(**validated_data)
         # Create empty profile
         UserProfile.objects.create(user=user)

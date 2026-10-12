@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { PlatformBrand } from '@/components/layout/platform-brand';
 import { useSessionInfo } from '@/hooks/use-session-info';
+import { clearSession } from '@/lib/session';
 import {
   LayoutDashboard,
   Calendar,
@@ -57,10 +58,7 @@ export function TeacherLayout({ children }: TeacherLayoutProps) {
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('school_id');
+    clearSession();
     router.push('/auth/login');
   };
 

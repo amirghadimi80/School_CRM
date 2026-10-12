@@ -68,6 +68,7 @@ class TenantMiddleware:
         
         # Try resolving user from JWT token (DRF JWT auth runs at view
         # level, so request.user is still anonymous here for API calls)
+        jwt_user = None
         if not tenant:
             auth_header = request.headers.get('Authorization', '')
             if auth_header.startswith('Bearer '):
@@ -76,22 +77,40 @@ class TenantMiddleware:
                     from apps.users.models import User
                     token_str = auth_header.split(' ', 1)[1]
                     access_token = AccessToken(token_str)
-                    user = User.objects.select_related('school').get(
+                    jwt_user = User.objects.with_inactive().select_related('school').get(
                         id=access_token['user_id']
                     )
-                    if hasattr(user, 'school') and user.school and user.school.is_active:
-                        tenant = user.school
+                    if (
+                        jwt_user.is_active
+                        and jwt_user.school_id
+                        and jwt_user.school.is_active
+                    ):
+                        tenant = jwt_user.school
                 except Exception:
-                    pass
+                    jwt_user = None
+
+        actor = request.user if getattr(request.user, 'is_authenticated', False) else jwt_user
+        is_super = bool(
+            actor and (
+                getattr(actor, 'is_superuser', False)
+                or getattr(actor, 'is_super_admin', False)
+            )
+        )
+        public_prefixes = (
+            '/admin/',
+            '/api/schema',
+            '/api/docs',
+            '/api/redoc',
+            '/static/',
+            '/media/',
+        )
         
         # Set default tenant if none found (for super admin or public endpoints)
         if not tenant and request.path.startswith('/api/v1/auth/'):
             # Allow auth endpoints without tenant
             set_current_tenant(None)
-        elif not tenant and not request.user.is_superuser:
-            # Require tenant for non-superusers
-            if not request.path.startswith('/admin/'):
-                raise Http404("Tenant not found or inactive")
+        elif not tenant and not is_super and not request.path.startswith(public_prefixes):
+            raise Http404("Tenant not found or inactive")
         else:
             set_current_tenant(tenant)
         

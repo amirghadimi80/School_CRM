@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { PlatformBrand } from '@/components/layout/platform-brand';
 import { useSessionInfo } from '@/hooks/use-session-info';
+import { clearSession } from '@/lib/session';
 import {
   LayoutDashboard,
   Users,
@@ -81,10 +82,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { userName, schoolName, roleDisplay, userInitial } = useSessionInfo();
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('school_id');
+    clearSession();
     router.push('/auth/login');
   };
 

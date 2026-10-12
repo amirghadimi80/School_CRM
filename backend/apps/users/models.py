@@ -16,6 +16,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Role choices
     ROLE_SUPER_ADMIN = 'super_admin'
     ROLE_SCHOOL_ADMIN = 'school_admin'
+    ROLE_ACCOUNTANT = 'accountant'
     ROLE_TEACHER = 'teacher'
     ROLE_STUDENT = 'student'
     ROLE_PARENT = 'parent'
@@ -23,6 +24,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = [
         (ROLE_SUPER_ADMIN, _('Super Admin')),
         (ROLE_SCHOOL_ADMIN, _('School Admin')),
+        (ROLE_ACCOUNTANT, _('Accountant')),
         (ROLE_TEACHER, _('Teacher')),
         (ROLE_STUDENT, _('Student')),
         (ROLE_PARENT, _('Parent')),
@@ -122,6 +124,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def is_school_admin(self):
         return self.role in [self.ROLE_SUPER_ADMIN, self.ROLE_SCHOOL_ADMIN]
+    
+    @property
+    def is_accountant(self):
+        return self.role == self.ROLE_ACCOUNTANT
     
     @property
     def is_teacher(self):

@@ -1,24 +1,38 @@
 """
 User API views.
 """
+import logging
 import re
 
-from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib.auth import authenticate
-from django.shortcuts import get_object_or_404
-from apps.common.permissions import IsSuperAdmin, IsSchoolAdmin, IsSchoolMember, IsOwnerOrAdmin
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
+from rest_framework import viewsets, status, permissions
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from apps.common.permissions import IsSchoolAdmin, IsOwnerOrAdmin
 from apps.common.middleware.tenant import get_current_tenant
-from .models import User
+from .models import User, UserProfile
 from apps.students.services.registration import student_internal_email
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserListSerializer,
-    LoginSerializer, PasswordChangeSerializer, TokenResponseSerializer,
+    LoginSerializer, PasswordChangeSerializer,
     UserSelfUpdateSerializer,
 )
+
+logger = logging.getLogger(__name__)
+
+# Roles a visitor may claim on the public register endpoint.
+PUBLIC_REGISTRATION_ROLES = {
+    User.ROLE_STUDENT,
+    User.ROLE_TEACHER,
+    User.ROLE_PARENT,
+}
 
 
 class AuthViewSet(viewsets.ViewSet):
@@ -72,30 +86,44 @@ class AuthViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['post'])
     def refresh(self, request):
-        """Refresh access token."""
-        # Use the built-in TokenRefreshView logic
+        """Rotate the refresh token and reject deactivated accounts."""
         refresh_token = request.data.get('refresh')
         if not refresh_token:
             return Response(
                 {'detail': 'Refresh token is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
-            refresh = RefreshToken(refresh_token)
-            user_id = refresh['user_id']
-            user = User.objects.get(id=user_id)
-            
-            return Response({
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-                'user': UserSerializer(user).data,
-            })
-        except Exception as e:
+            token = RefreshToken(refresh_token)
+            user = User.objects.with_inactive().get(id=token['user_id'])
+        except (TokenError, User.DoesNotExist):
             return Response(
                 {'detail': 'Invalid refresh token'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+        if not user.is_active:
+            return Response(
+                {'detail': 'Account is deactivated'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = TokenRefreshSerializer(data={'refresh': refresh_token})
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError:
+            return Response(
+                {'detail': 'Invalid refresh token'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        data = serializer.validated_data
+        return Response({
+            'access': data['access'],
+            'refresh': data.get('refresh', refresh_token),
+            'user': UserSerializer(user).data,
+        })
     
     @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def logout(self, request):
@@ -167,77 +195,104 @@ class AuthViewSet(viewsets.ViewSet):
         user.save()
         return Response({'detail': 'Password changed successfully'})
     
+    def _create_role_profile(self, user, role, school):
+        """Create the tenant-scoped profile. School is required by these models."""
+        if role == User.ROLE_TEACHER:
+            from apps.teachers.models import Teacher
+            Teacher.objects.create(
+                user=user,
+                school=school,
+                employee_id=f"TCH{user.id:05d}",
+                specialization='عمومی',
+                status=Teacher.STATUS_ACTIVE,
+            )
+        elif role == User.ROLE_STUDENT:
+            from apps.students.models import Student
+            Student.objects.create(
+                user=user,
+                school=school,
+                student_code=f"STD{user.id:05d}",
+                grade_level='۱',
+                status=Student.STATUS_ACTIVE,
+            )
+        elif role == User.ROLE_PARENT:
+            from apps.students.models import Parent
+            Parent.objects.create(user=user, school=school)
+
     @action(detail=False, methods=['post'])
     def register(self, request):
-        """Register a new user."""
-        data = request.data.copy()
-        
-        # Validate required fields
+        """Register a new user. Privileged roles cannot be self-assigned."""
+        data = request.data
+
         required_fields = ['email', 'password', 'first_name', 'last_name']
         for field in required_fields:
-            if not data.get(field):
+            if not str(data.get(field) or '').strip():
                 return Response(
                     {'detail': f'{field} is required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        
-        # Check if email already exists
-        if User.objects.filter(email=data['email']).exists():
+
+        email = str(data['email']).strip()
+        if User.objects.with_inactive().filter(email__iexact=email).exists():
             return Response(
                 {'detail': 'User with this email already exists'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        # Create user
-        try:
-            user_role = data.get('role', 'student')
-            
-            user = User.objects.create_user(
-                email=data['email'],
-                password=data['password'],
-                first_name=data.get('first_name', ''),
-                last_name=data.get('last_name', ''),
-                phone=data.get('phone', ''),
-                role=user_role,
-                is_active=True
-            )
-            
-            # Create empty profile
-            from .models import UserProfile
-            UserProfile.objects.create(user=user)
-            
-            # Create role-specific profile
-            if user_role == 'teacher':
-                from apps.teachers.models import Teacher
-                Teacher.objects.create(
-                    user=user,
-                    employee_id=f"TCH{user.id:05d}",
-                    specialization='عمومی',
-                    employment_status='active'
-                )
-            elif user_role == 'student':
-                from apps.students.models import Student
-                Student.objects.create(
-                    user=user,
-                    student_code=f"STD{user.id:05d}",
-                    grade_level='۱',
-                    status='active'
-                )
-            
-            # Generate tokens
-            refresh = RefreshToken.for_user(user)
-            
-            return Response({
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-                'user': UserSerializer(user).data,
-            }, status=status.HTTP_201_CREATED)
-            
-        except Exception as e:
+
+        user_role = data.get('role') or User.ROLE_STUDENT
+        if user_role not in PUBLIC_REGISTRATION_ROLES:
             return Response(
-                {'detail': str(e)},
+                {'detail': 'This role cannot be self-registered.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        try:
+            validate_password(data['password'])
+        except DjangoValidationError as exc:
+            return Response(
+                {'detail': exc.messages[0]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        school = None
+        school_id = data.get('school') or data.get('school_id')
+        if school_id:
+            from apps.schools.models import School
+            school = School.objects.filter(id=school_id, is_active=True).first()
+            if school is None:
+                return Response(
+                    {'detail': 'School not found.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        try:
+            with transaction.atomic():
+                user = User.objects.create_user(
+                    email=email,
+                    password=data['password'],
+                    first_name=data.get('first_name', ''),
+                    last_name=data.get('last_name', ''),
+                    phone=data.get('phone', '') or '',
+                    role=user_role,
+                    is_active=True,
+                    school=school,
+                )
+                UserProfile.objects.create(user=user)
+                if school is not None:
+                    self._create_role_profile(user, user_role, school)
+                refresh = RefreshToken.for_user(user)
+        except Exception:
+            logger.exception('Registration failed for %s', email)
+            return Response(
+                {'detail': 'Registration failed.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data,
+        }, status=status.HTTP_201_CREATED)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -278,9 +333,15 @@ class UserViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
     
     def perform_create(self, serializer):
-        """Set school automatically for new users."""
+        """Set school automatically. Only super admins may create a super admin."""
+        role = serializer.validated_data.get('role', User.ROLE_STUDENT)
+        if role == User.ROLE_SUPER_ADMIN and not self.request.user.is_super_admin:
+            raise ValidationError({'role': 'You cannot assign this role.'})
         tenant = get_current_tenant()
-        serializer.save(school=tenant)
+        if role == User.ROLE_SUPER_ADMIN:
+            serializer.save(school=None)
+        else:
+            serializer.save(school=tenant)
     
     @action(detail=True, methods=['post'], permission_classes=[IsOwnerOrAdmin])
     def change_password(self, request, id=None):

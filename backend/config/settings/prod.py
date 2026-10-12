@@ -1,9 +1,21 @@
 """
 Production settings for School CRM.
 """
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+
+_insecure_markers = ('django-insecure', 'change-in-production', 'change-me', 'dev-secret')
+if (
+    not os.environ.get('SECRET_KEY', '').strip()
+    or len(SECRET_KEY) < 32
+    or any(marker in SECRET_KEY for marker in _insecure_markers)
+):
+    raise ImproperlyConfigured(
+        'Set SECRET_KEY to a unique value of at least 32 characters in production.'
+    )
 
 DEBUG = False
 

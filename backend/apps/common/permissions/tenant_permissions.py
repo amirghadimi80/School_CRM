@@ -115,23 +115,31 @@ class IsOwnerOrAdmin(permissions.BasePermission):
     Permission to only allow owners of an object or admins to edit it.
     """
     def has_object_permission(self, request, view, obj):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+
         # Super admins can do anything
-        if request.user.is_super_admin:
+        if user.is_super_admin:
             return True
-        
-        # School admins can do anything in their school
+
+        # School admins can do anything in their school.
+        # tenant is None for some auth and super-admin requests; do not dereference it.
         tenant = get_current_tenant()
-        if request.user.is_school_admin and request.user.school_id == tenant.id:
+        if user.is_school_admin and tenant is not None and user.school_id == tenant.id:
             return True
-        
+
+        if obj == user:
+            return True
+
         # Check if object has a user field
-        if hasattr(obj, 'user'):
-            return obj.user == request.user
-        
+        if hasattr(obj, 'user_id'):
+            return obj.user_id == user.id
+
         # Check if object has created_by field
-        if hasattr(obj, 'created_by'):
-            return obj.created_by == request.user
-        
+        if hasattr(obj, 'created_by_id'):
+            return obj.created_by_id == user.id
+
         return False
 
 

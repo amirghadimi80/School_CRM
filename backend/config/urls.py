@@ -17,6 +17,7 @@ urlpatterns = [
     # API v1
     path('api/v1/', include([
         path('auth/', include('apps.users.urls')),
+        path('users/', include('apps.users.dashboard_urls')),
         path('schools/', include('apps.schools.urls')),
         path('classes/', include('apps.classes.urls')),
         path('teachers/', include('apps.teachers.urls')),

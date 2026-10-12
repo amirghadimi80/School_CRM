@@ -71,11 +71,7 @@ export default function FinancePage() {
   }, [router]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fa-IR', {
-      style: 'currency',
-      currency: 'IRR',
-      maximumFractionDigits: 0,
-    }).format(amount);
+    return `${new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(amount)} تومان`;
   };
 
   const handleAddPayment = () => {
