@@ -26,6 +26,7 @@ import {
   BookOpen,
   Users,
 } from 'lucide-react';
+import { setSession } from '@/lib/session';
 
 const roleOptions = [
   { value: 'student', label: 'دانش‌آموز', icon: BookOpen },
@@ -78,14 +79,7 @@ export default function RegisterPage() {
       }
 
       const data = await response.json();
-
-      localStorage.setItem('access_token', data.access);
-      localStorage.setItem('refresh_token', data.refresh);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      if (data.user?.school) {
-        localStorage.setItem('school_id', data.user.school.id);
-      }
+      setSession(data);
 
       const userRole = data.user?.role;
       if (userRole === 'teacher') {

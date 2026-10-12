@@ -7,13 +7,12 @@ services:
     container_name: school_crm_db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: school_crm
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-school_crm}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # Not published on the host. Other services reach Postgres on the compose network.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -25,8 +24,7 @@ services:
     image: redis:7-alpine
     container_name: school_crm_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+    # Not published on the host. Other services reach Redis on the compose network.
     volumes:
       - redis_data:/data
     healthcheck:
@@ -45,10 +43,10 @@ services:
     environment:
       - DEBUG=True
       - DJANGO_SETTINGS_MODULE=config.settings.dev
-      - SECRET_KEY=dev-secret-key-change-in-production
-      - DB_NAME=school_crm
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY}
+      - DB_NAME=${POSTGRES_DB:-school_crm}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
       - DB_HOST=db
       - DB_PORT=5432
       - REDIS_URL=redis://redis:6379/1
@@ -79,10 +77,10 @@ services:
     environment:
       - DEBUG=True
       - DJANGO_SETTINGS_MODULE=config.settings.dev
-      - SECRET_KEY=dev-secret-key-change-in-production
-      - DB_NAME=school_crm
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY}
+      - DB_NAME=${POSTGRES_DB:-school_crm}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
       - DB_HOST=db
       - DB_PORT=5432
       - CELERY_BROKER_URL=redis://redis:6379/0
@@ -104,10 +102,10 @@ services:
     environment:
       - DEBUG=True
       - DJANGO_SETTINGS_MODULE=config.settings.dev
-      - SECRET_KEY=dev-secret-key-change-in-production
-      - DB_NAME=school_crm
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY}
+      - DB_NAME=${POSTGRES_DB:-school_crm}
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
       - DB_HOST=db
       - DB_PORT=5432
       - CELERY_BROKER_URL=redis://redis:6379/0

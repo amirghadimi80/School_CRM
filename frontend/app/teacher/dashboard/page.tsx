@@ -14,6 +14,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 
 interface TeacherDashboardData {
   teacher: {
@@ -61,60 +62,10 @@ export default function TeacherDashboardPage() {
     loadDashboard();
   }, [router]);
 
-  const requestDashboard = (token: string | null) => {
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-    const schoolId = localStorage.getItem('school_id');
-    if (schoolId) {
-      headers['X-Tenant-ID'] = schoolId;
-    }
-    return fetch('/api/v1/auth/teacher/dashboard/dashboard', { headers });
-  };
-
   const loadDashboard = async () => {
     try {
-      let response = await requestDashboard(localStorage.getItem('access_token'));
-
-      // Access token expired/invalid: try to refresh once before giving up.
-      if (response.status === 401) {
-        const refresh = localStorage.getItem('refresh_token');
-        if (refresh) {
-          const refreshRes = await fetch('/api/v1/auth/refresh', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refresh }),
-          });
-          if (refreshRes.ok) {
-            const refreshData = await refreshRes.json();
-            if (refreshData.access) {
-              localStorage.setItem('access_token', refreshData.access);
-              if (refreshData.refresh) {
-                localStorage.setItem('refresh_token', refreshData.refresh);
-              }
-              response = await requestDashboard(refreshData.access);
-            }
-          }
-        }
-      }
-
-      // Still unauthorized: stored session is stale, send the user to login.
-      if (response.status === 401) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('school_id');
-        router.push('/auth/login');
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error('Failed to load dashboard data');
-      }
-
-      const data = await response.json();
-      setData(data);
+      const response = await api.get<TeacherDashboardData>('/auth/teacher/dashboard/dashboard');
+      setData(response.data);
     } catch (error) {
       toast({
         title: 'خطا',

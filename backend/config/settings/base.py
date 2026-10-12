@@ -11,7 +11,9 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-in-production')
+# Production must set SECRET_KEY. The fallback is rejected by prod settings.
+_secret_key = os.environ.get('SECRET_KEY', '').strip()
+SECRET_KEY = _secret_key or 'django-insecure-dev-only-not-for-production'
 
 DEBUG = False
 
@@ -216,6 +218,8 @@ AUTHENTICATION_BACKENDS = [
     'guardian.backends.ObjectPermissionBackend',
 ]
 
+(BASE_DIR / 'logs').mkdir(parents=True, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -266,5 +270,3 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
-
-from datetime import timedelta

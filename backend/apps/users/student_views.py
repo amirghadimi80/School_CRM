@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.db import models
 
+from apps.common.calendar import iran_weekday
 from apps.common.permissions import IsStudent
 from apps.schools.models import GeneratedSchedule
 from apps.attendance.models import Attendance
@@ -19,18 +20,29 @@ class StudentDashboardViewSet(viewsets.ViewSet):
     ViewSet for student dashboard and operations.
     """
     permission_classes = [permissions.IsAuthenticated, IsStudent]
+
+    def _student(self, request):
+        student = getattr(request.user, 'student_profile', None)
+        if student is None:
+            return None, Response(
+                {'detail': 'Student profile not found.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return student, None
     
     @action(detail=False, methods=['get'])
     def dashboard(self, request):
         """Get student dashboard data."""
-        student = request.user.student_profile
+        student, error = self._student(request)
+        if error:
+            return error
         today = timezone.now().date()
         
         # Today's schedule
         if student.current_class:
             today_schedules = GeneratedSchedule.objects.filter(
                 class_assigned=student.current_class,
-                day_of_week=today.weekday(),
+                day_of_week=iran_weekday(today),
                 is_active=True
             ).select_related('course', 'teacher', 'period').order_by('period__period_number')
         else:
@@ -67,7 +79,7 @@ class StudentDashboardViewSet(viewsets.ViewSet):
         
         # Financial status
         invoices = Invoice.objects.filter(student=student)
-        total_due = sum(inv.balance for inv in invoices)
+        total_due = sum(inv.remaining_amount for inv in invoices)
         
         # Recent absences
         recent_absences = Attendance.objects.filter(
@@ -78,7 +90,7 @@ class StudentDashboardViewSet(viewsets.ViewSet):
         absences_data = [{
             'date': a.date.strftime('%Y-%m-%d'),
             'status': a.status,
-            'course': a.class_schedule.course.name if a.class_schedule else 'N/A',
+            'course': a.class_record.name if a.class_record_id else 'N/A',
         } for a in recent_absences]
         
         return Response({
@@ -100,7 +112,9 @@ class StudentDashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def schedule(self, request):
         """Get student's weekly schedule."""
-        student = request.user.student_profile
+        student, error = self._student(request)
+        if error:
+            return error
         
         if not student.current_class:
             return Response({'schedule': [], 'message': 'Not assigned to any class'})
@@ -136,11 +150,13 @@ class StudentDashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def grades(self, request):
         """Get student's grades and transcript."""
-        student = request.user.student_profile
+        student, error = self._student(request)
+        if error:
+            return error
         
         grades = Grade.objects.filter(
             student=student
-        ).select_related('course', 'class_assigned').order_by('-date')
+        ).select_related('course', 'class_record').order_by('-exam_date')
         
         # Group by course
         from django.db.models import Avg
@@ -151,17 +167,20 @@ class StudentDashboardViewSet(viewsets.ViewSet):
         
         grades_data = []
         for grade in grades:
+            max_score = float(grade.max_score) if grade.max_score else 0
+            score = float(grade.score)
+            percentage = round((score / max_score) * 100, 1) if max_score else 0
             grades_data.append({
                 'id': grade.id,
                 'course': grade.course.name,
                 'course_id': grade.course.id,
-                'score': grade.score,
-                'max_score': grade.max_score,
-                'percentage': round((grade.score / grade.max_score) * 100, 1),
-                'grade_type': grade.grade_type,
-                'description': grade.description,
-                'date': grade.date.strftime('%Y-%m-%d'),
-                'class_name': grade.class_assigned.name if grade.class_assigned else None,
+                'score': score,
+                'max_score': max_score,
+                'percentage': percentage,
+                'grade_type': grade.exam_type,
+                'description': grade.notes or grade.title,
+                'date': grade.exam_date.strftime('%Y-%m-%d'),
+                'class_name': grade.class_record.name if grade.class_record_id else None,
             })
         
         # Calculate overall GPA
@@ -196,7 +215,9 @@ class StudentDashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def attendance(self, request):
         """Get student's attendance records."""
-        student = request.user.student_profile
+        student, error = self._student(request)
+        if error:
+            return error
         
         # Get query params
         month = request.query_params.get('month')
@@ -255,7 +276,9 @@ class StudentDashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def finance(self, request):
         """Get student's financial status."""
-        student = request.user.student_profile
+        student, error = self._student(request)
+        if error:
+            return error
         
         invoices = Invoice.objects.filter(
             student=student
@@ -273,7 +296,7 @@ class StudentDashboardViewSet(viewsets.ViewSet):
                 'fee_type': inv.fee_type.name if inv.fee_type else 'N/A',
                 'amount': float(inv.total_amount),
                 'paid_amount': float(inv.paid_amount),
-                'balance': float(inv.balance),
+                'balance': float(inv.remaining_amount),
                 'status': inv.status,
                 'issue_date': inv.issue_date.strftime('%Y-%m-%d'),
                 'due_date': inv.due_date.strftime('%Y-%m-%d'),
@@ -285,8 +308,8 @@ class StudentDashboardViewSet(viewsets.ViewSet):
                 'id': pay.id,
                 'amount': float(pay.amount),
                 'payment_date': pay.payment_date.strftime('%Y-%m-%d'),
-                'payment_method': pay.payment_method,
-                'reference': pay.reference,
+                'payment_method': pay.method,
+                'reference': pay.reference_number,
                 'invoice_number': pay.invoice.invoice_number,
             })
         
@@ -308,6 +331,3 @@ class StudentDashboardViewSet(viewsets.ViewSet):
             'invoices': invoices_data,
             'payments': payments_data,
         })
-
-
-from django.db import models

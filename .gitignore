@@ -10,8 +10,9 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+# Ignore a top-level Python build lib only. frontend/lib is application code.
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -35,6 +36,7 @@ staticfiles/
 
 # Virtual environments
 venv/
+vevn/
 env/
 ENV/
 env.bak/

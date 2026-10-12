@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AuthLayout } from '@/components/auth/auth-layout';
 import { AuthField } from '@/components/auth/auth-field';
 import { Loader2, Lock, Mail, ArrowLeft } from 'lucide-react';
+import { setSession } from '@/lib/session';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,18 +37,7 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
-
-      localStorage.setItem('access_token', data.access);
-      localStorage.setItem('refresh_token', data.refresh);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      const schoolId =
-        typeof data.user?.school === 'object'
-          ? data.user?.school?.id
-          : data.user?.school;
-      if (schoolId !== undefined && schoolId !== null) {
-        localStorage.setItem('school_id', String(schoolId));
-      }
+      setSession(data);
 
       const role = data.user.role;
       if (role === 'teacher') {

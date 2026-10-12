@@ -22,6 +22,20 @@ from .serializers import (
 from .services.registration import generate_unique_national_id, is_profile_complete
 
 
+def visible_students(user, tenant):
+    """Students a user is allowed to see inside the current school."""
+    if not tenant or not user or not user.is_authenticated:
+        return Student.objects.none()
+    queryset = Student.objects.filter(school=tenant, is_deleted=False)
+    if user.is_super_admin or user.is_school_admin or user.is_teacher or user.is_accountant:
+        return queryset
+    if user.is_student_user:
+        return queryset.filter(user=user)
+    if user.is_parent_user and hasattr(user, 'parent_profile'):
+        return queryset.filter(parents=user.parent_profile)
+    return queryset.none()
+
+
 class StudentViewSet(viewsets.ModelViewSet):
     """ViewSet for student management."""
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -29,15 +43,14 @@ class StudentViewSet(viewsets.ModelViewSet):
     search_fields = ['student_code', 'user__first_name', 'user__last_name', 'user__email']
     ordering_fields = ['student_code', 'user__first_name', 'created_at']
     lookup_field = 'id'
+    lookup_value_regex = r'[0-9]+'
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_queryset(self):
         tenant = get_current_tenant()
-        if tenant:
-            return Student.objects.filter(school=tenant, is_deleted=False).select_related(
-                'user', 'user__profile', 'current_class'
-            )
-        return Student.objects.none()
+        return visible_students(self.request.user, tenant).select_related(
+            'user', 'user__profile', 'current_class'
+        )
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -193,7 +206,10 @@ class StudentDocumentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         tenant = get_current_tenant()
-        queryset = StudentDocument.objects.filter(school=tenant) if tenant else StudentDocument.objects.none()
+        if not tenant:
+            return StudentDocument.objects.none()
+        allowed = visible_students(self.request.user, tenant)
+        queryset = StudentDocument.objects.filter(school=tenant, student__in=allowed)
         student_id = self.request.query_params.get('student')
         if student_id:
             queryset = queryset.filter(student_id=student_id)
@@ -202,7 +218,7 @@ class StudentDocumentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         tenant = get_current_tenant()
         student_id = self.request.data.get('student')
-        student = get_object_or_404(Student, id=student_id, school=tenant)
+        student = get_object_or_404(visible_students(self.request.user, tenant), id=student_id)
         serializer.save(school=tenant, student=student)
 
 

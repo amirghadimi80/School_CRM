@@ -4,9 +4,10 @@ Teacher dashboard and operations API views.
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from datetime import timedelta
 
+from apps.common.calendar import iran_weekday
 from apps.common.permissions import IsTeacher
 from apps.common.middleware.tenant import get_current_tenant
 from apps.teachers.models import TeacherAssignment
@@ -37,7 +38,7 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         # Today's classes from schedule
         today_classes = GeneratedSchedule.objects.filter(
             teacher=teacher,
-            day_of_week=today.weekday(),
+            day_of_week=iran_weekday(today),
             is_active=True
         ).select_related('course', 'class_assigned', 'period').order_by('period__period_number')
         
@@ -110,7 +111,7 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         weekly_schedule = {day: [] for day in days}
         
         for item in schedules:
-            day_name = days[item.day_of_week] if item.day_of_week < 7 else ' other'
+            day_name = days[item.day_of_week] if item.day_of_week < 7 else 'other'
             weekly_schedule[day_name].append({
                 'id': item.id,
                 'period': item.period.period_number,
@@ -159,7 +160,8 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         from apps.classes.models import Class
         
         teacher = request.user.teacher_profile
-        class_obj = Class.objects.get(id=pk)
+        school = get_current_tenant()
+        class_obj = get_object_or_404(Class, id=pk, school=school)
         
         # Verify teacher teaches this class
         has_access = TeacherAssignment.objects.filter(
@@ -216,7 +218,8 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         from apps.students.models import Student
         
         teacher = request.user.teacher_profile
-        class_obj = Class.objects.get(id=pk)
+        school = get_current_tenant()
+        class_obj = get_object_or_404(Class, id=pk, school=school)
         
         # Verify teacher teaches this class
         has_access = TeacherAssignment.objects.filter(
@@ -242,17 +245,20 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         # Create or update attendance records
         for item in attendance_data:
             student_id = item.get('student_id')
-            status = item.get('status')
+            attendance_status = item.get('status')
             
-            student = Student.objects.get(id=student_id)
+            student = get_object_or_404(
+                Student, id=student_id, school=school, current_class=class_obj
+            )
             
             Attendance.objects.update_or_create(
                 student=student,
                 date=date,
                 defaults={
-                    'status': status,
-                    'marked_by': teacher,
-                    'marked_at': timezone.now(),
+                    'status': attendance_status,
+                    'class_record': class_obj,
+                    'recorded_by': request.user,
+                    'school': school,
                 }
             )
         
@@ -264,7 +270,8 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         from apps.classes.models import Class
         
         teacher = request.user.teacher_profile
-        class_obj = Class.objects.get(id=pk)
+        school = get_current_tenant()
+        class_obj = get_object_or_404(Class, id=pk, school=school)
         course_id = request.query_params.get('course_id')
         
         # Verify teacher teaches this class
@@ -301,10 +308,10 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
                 'id': g.id,
                 'course': g.course.name,
                 'course_id': g.course.id,
-                'score': g.score,
-                'max_score': g.max_score,
-                'grade_type': g.grade_type,
-                'date': g.date.strftime('%Y-%m-%d'),
+                'score': float(g.score),
+                'max_score': float(g.max_score),
+                'grade_type': g.exam_type,
+                'date': g.exam_date.strftime('%Y-%m-%d'),
             } for g in student_grades]
             
             # Calculate average
@@ -335,10 +342,10 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         """Add grade for a student in a class."""
         from apps.classes.models import Class
         from apps.students.models import Student
-        from apps.classes.models import Course
         
         teacher = request.user.teacher_profile
-        class_obj = Class.objects.get(id=pk)
+        school = get_current_tenant()
+        class_obj = get_object_or_404(Class, id=pk, school=school)
         
         # Verify teacher teaches this class
         assignment = TeacherAssignment.objects.filter(
@@ -355,20 +362,27 @@ class TeacherDashboardViewSet(viewsets.ViewSet):
         student_id = request.data.get('student_id')
         score = request.data.get('score')
         max_score = request.data.get('max_score', 20)
-        grade_type = request.data.get('grade_type', 'exam')
+        grade_type = request.data.get('grade_type') or request.data.get('exam_type') or Grade.EXAM_TYPE_OTHER
+        valid_types = {choice for choice, _label in Grade.EXAM_TYPE_CHOICES}
+        if grade_type not in valid_types:
+            grade_type = Grade.EXAM_TYPE_OTHER
         description = request.data.get('description', '')
         
-        student = Student.objects.get(id=student_id)
+        student = get_object_or_404(Student, id=student_id, school=school)
         
         grade = Grade.objects.create(
             student=student,
             course=assignment.course,
-            class_assigned=class_obj,
+            class_record=class_obj,
             score=score,
             max_score=max_score,
-            grade_type=grade_type,
-            description=description,
-            recorded_by=teacher,
+            exam_type=grade_type,
+            notes=description,
+            exam_date=request.data.get('date') or timezone.now().date(),
+            academic_year=self._get_academic_year(request),
+            term=request.data.get('term') or '',
+            recorded_by=request.user,
+            school=school,
         )
         
         return Response({

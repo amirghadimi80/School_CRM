@@ -93,24 +93,23 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        school = user.school if hasattr(user, 'school') else None
+        school = getattr(user, 'school', None)
         
         if not school:
             return QuestionBank.objects.none()
         
         queryset = QuestionBank.objects.filter(school=school)
-        
-        # Filter based on user role
-        try:
-            teacher = user.teacher_profile
-            # Teachers see: their own questions + public approved questions
-            queryset = queryset.filter(
-                Q(created_by_teacher=teacher) | 
-                Q(is_public=True, status=QuestionBank.STATUS_APPROVED)
-            )
-        except:
-            pass
-        
+        if user.is_school_admin:
+            return queryset.select_related('course', 'created_by_teacher')
+
+        teacher = getattr(user, 'teacher_profile', None)
+        if teacher is None:
+            return QuestionBank.objects.none()
+
+        queryset = queryset.filter(
+            Q(created_by_teacher=teacher) |
+            Q(is_public=True, status=QuestionBank.STATUS_APPROVED)
+        )
         return queryset.select_related('course', 'created_by_teacher')
     
     def get_serializer_class(self):
@@ -122,14 +121,16 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        try:
-            context['teacher'] = self.request.user.teacher_profile
-        except:
-            pass
+        teacher = getattr(self.request.user, 'teacher_profile', None)
+        if teacher is not None:
+            context['teacher'] = teacher
         return context
     
     def perform_create(self, serializer):
-        teacher = self.request.user.teacher_profile
+        teacher = getattr(self.request.user, 'teacher_profile', None)
+        if teacher is None:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Only teachers can create questions.')
         serializer.save(
             created_by_teacher=teacher,
             school=teacher.school
@@ -151,6 +152,8 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         """Admin approves a question."""
+        if not request.user.is_school_admin:
+            return Response({'detail': 'Only school admins can approve questions.'}, status=status.HTTP_403_FORBIDDEN)
         question = self.get_object()
         question.status = QuestionBank.STATUS_APPROVED
         question.is_approved = True
@@ -162,6 +165,8 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
         """Admin rejects a question with reason."""
+        if not request.user.is_school_admin:
+            return Response({'detail': 'Only school admins can reject questions.'}, status=status.HTTP_403_FORBIDDEN)
         question = self.get_object()
         reason = request.data.get('reason', '')
         question.status = QuestionBank.STATUS_REJECTED
@@ -173,6 +178,8 @@ class QuestionBankViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def make_public(self, request, pk=None):
         """Make question visible to other teachers."""
+        if not request.user.is_school_admin:
+            return Response({'detail': 'Only school admins can publish questions to the bank.'}, status=status.HTTP_403_FORBIDDEN)
         question = self.get_object()
         question.is_public = True
         question.save()
@@ -223,8 +230,11 @@ class QuestionFileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        school = self.request.user.school if hasattr(self.request.user, 'school') else None
+        user = self.request.user
+        school = getattr(user, 'school', None)
         if not school:
+            return QuestionFile.objects.none()
+        if not user.is_school_admin and getattr(user, 'teacher_profile', None) is None:
             return QuestionFile.objects.none()
         return QuestionFile.objects.filter(school=school)
     
@@ -252,21 +262,21 @@ class ExamViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        school = user.school if hasattr(user, 'school') else None
+        school = getattr(user, 'school', None)
         
         if not school:
             return Exam.objects.none()
         
         queryset = Exam.objects.filter(school=school)
-        
-        # Filter based on user role
-        try:
-            teacher = user.teacher_profile
-            queryset = queryset.filter(created_by_teacher=teacher)
-        except:
-            pass
-        
-        return queryset.select_related('course', 'created_by_teacher').prefetch_related('exam_questions__question')
+        if user.is_school_admin:
+            return queryset.select_related('course', 'created_by_teacher').prefetch_related('exam_questions__question')
+
+        teacher = getattr(user, 'teacher_profile', None)
+        if teacher is None:
+            return Exam.objects.none()
+        return queryset.filter(created_by_teacher=teacher).select_related(
+            'course', 'created_by_teacher'
+        ).prefetch_related('exam_questions__question')
     
     def get_serializer_class(self):
         if self.action == 'list':
@@ -275,14 +285,16 @@ class ExamViewSet(viewsets.ModelViewSet):
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        try:
-            context['teacher'] = self.request.user.teacher_profile
-        except:
-            pass
+        teacher = getattr(self.request.user, 'teacher_profile', None)
+        if teacher is not None:
+            context['teacher'] = teacher
         return context
     
     def perform_create(self, serializer):
-        teacher = self.request.user.teacher_profile
+        teacher = getattr(self.request.user, 'teacher_profile', None)
+        if teacher is None:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Only teachers can create exams.')
         serializer.save(
             created_by_teacher=teacher,
             school=teacher.school
@@ -364,21 +376,16 @@ class StudentExamViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        user = self.request.user
-        
-        # Check if user is a student
-        try:
-            student = user.student_profile
-            return StudentExam.objects.filter(student=student)
-        except:
+        student = getattr(self.request.user, 'student_profile', None)
+        if student is None:
             return StudentExam.objects.none()
+        return StudentExam.objects.filter(student=student)
     
     @action(detail=True, methods=['post'])
     def start(self, request, pk=None):
         """Start the exam for this student."""
-        try:
-            student = request.user.student_profile
-        except:
+        student = getattr(request.user, 'student_profile', None)
+        if student is None:
             return Response({'error': 'Only students can start exams'}, status=status.HTTP_403_FORBIDDEN)
         
         student_exam = self.get_object()
@@ -505,14 +512,14 @@ class StudentAnswerViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        try:
-            teacher = user.teacher_profile
-            # Get answers for exams created by this teacher
-            return StudentAnswer.objects.filter(
-                student_exam__exam__created_by_teacher=teacher
-            )
-        except:
+        if user.is_school_admin and getattr(user, 'school', None):
+            return StudentAnswer.objects.filter(student_exam__exam__school=user.school)
+        teacher = getattr(user, 'teacher_profile', None)
+        if teacher is None:
             return StudentAnswer.objects.none()
+        return StudentAnswer.objects.filter(
+            student_exam__exam__created_by_teacher=teacher
+        )
     
     @action(detail=True, methods=['post'])
     def grade(self, request, pk=None):
