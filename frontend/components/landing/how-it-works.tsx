@@ -1,5 +1,3 @@
-'use client';
-
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, UserPlus, Settings, Rocket, HeadphonesIcon, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -10,100 +8,85 @@ const steps = [
     icon: UserPlus,
     step: '۰۱',
     title: 'ثبت‌نام',
-    description: 'ایجاد حساب و وارد کردن اطلاعات پایه مدرسه',
+    description: 'حساب می‌سازید و مشخصات پایه مدرسه را وارد می‌کنید.',
   },
   {
     icon: Settings,
     step: '۰۲',
     title: 'پیکربندی',
-    description: 'تنظیم کلاس‌ها، معلمان و دانش‌آموزان',
+    description: 'کلاس، معلم و دانش‌آموز را در همان جا می‌چینید.',
   },
   {
     icon: Rocket,
     step: '۰۳',
-    title: 'راه‌اندازی',
-    description: 'شروع استفاده از تمام امکانات سامانه',
+    title: 'شروع کار',
+    description: 'حضور، نمره و برنامه را روی سامانه می‌برید.',
   },
   {
     icon: HeadphonesIcon,
     step: '۰۴',
     title: 'پشتیبانی',
-    description: 'همراهی تیم فنی در تمام مراحل',
+    description: 'اگر جایی گیر کردید، تیم پشتیبانی کنار شماست.',
   },
 ];
 
 export function HowItWorks() {
   return (
-    <section id="demo" className="bg-slate-50 py-24">
+    <section id="demo" className="scroll-mt-24 bg-[#e9e3d6] py-20 lg:py-24">
       <div className="container mx-auto px-4">
         <SectionHeading
           badge="شروع کار"
-          title="در ۴ مرحله ساده آماده‌اید"
-          description="راه‌اندازی سپاد سریع و بدون نیاز به دانش فنی است"
+          title="چهار قدم تا استفاده"
+          description="راه‌اندازی تحت وب است و نصب جدا نمی‌خواهد."
         />
 
-        <div className="relative mb-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <div className="absolute right-0 top-12 hidden h-0.5 w-full bg-gradient-to-l from-blue-200 to-emerald-200 lg:block" />
-          {steps.map((s) => (
-            <div key={s.step} className="relative rounded-2xl border border-slate-200/80 bg-white p-6">
-              <span className="absolute -top-3 right-4 rounded-full bg-gradient-to-l from-blue-600 to-emerald-600 px-3 py-0.5 text-xs font-bold text-white">
-                {s.step}
-              </span>
-              <div className="mb-4 mt-2 inline-flex rounded-xl bg-blue-50 p-3">
-                <s.icon className="h-5 w-5 text-blue-600" />
+        <ol className="mb-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {steps.map((step) => (
+            <li key={step.step} className="rounded-[24px] bg-white p-6">
+              <div className="mb-5 flex items-center justify-between">
+                <span className="text-sm font-extrabold text-[#0c6670]">{step.step}</span>
+                <step.icon className="h-5 w-5 text-[#102033]" aria-hidden />
               </div>
-              <h3 className="mb-1 font-bold text-slate-900">{s.title}</h3>
-              <p className="text-sm text-slate-600">{s.description}</p>
-            </div>
+              <h3 className="font-extrabold text-[#102033]">{step.title}</h3>
+              <p className="mt-2 text-sm leading-7 text-slate-600">{step.description}</p>
+            </li>
           ))}
-        </div>
+        </ol>
 
-        <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-emerald-600 p-8 lg:p-12">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div className="space-y-6 text-white">
-              <h3 className="text-2xl font-bold lg:text-3xl">۷ روز استفاده رایگان</h3>
-              <p className="leading-relaxed text-blue-100">
-                بدون نیاز به کارت بانکی، تمام امکانات را امتحان کنید و ببینید سپاد چطور مدیریت
-                مدرسه‌تان را ساده می‌کند.
-              </p>
-              <ul className="space-y-3">
-                {['دسترسی کامل به امکانات', 'پشتیبانی راه‌اندازی', 'لغو هر زمان'].map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-sm text-blue-50">
-                    <CheckCircle className="h-4 w-4 shrink-0 text-emerald-300" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                size="lg"
-                className="bg-white text-blue-700 shadow-lg hover:bg-blue-50"
-                asChild
-              >
-                <Link href="/auth/register">
-                  شروع دوره آزمایشی
-                  <ArrowLeft className="mr-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-            <div className="rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-sm">
-              <div className="space-y-4">
-                {[
-                  { label: 'زمان راه‌اندازی', val: 'کمتر از ۱ ساعت' },
-                  { label: 'نیاز به نصب', val: 'خیر — تحت وب' },
-                  { label: 'آموزش اولیه', val: 'رایگان' },
-                  { label: 'پشتیبانی', val: '۲۴ ساعته' },
-                ].map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex items-center justify-between border-b border-white/10 pb-3 last:border-0 last:pb-0"
-                  >
-                    <span className="text-sm text-blue-100">{row.label}</span>
-                    <span className="font-semibold text-white">{row.val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <div className="grid items-center gap-8 overflow-hidden rounded-[28px] bg-[#102033] p-7 text-white lg:grid-cols-2 lg:p-12">
+          <div>
+            <h3 className="text-2xl font-extrabold leading-snug lg:text-3xl">۷ روز، بدون کارت بانکی</h3>
+            <p className="mt-3 leading-8 text-white/70">
+              همه امکانات را در همین بازه امتحان می‌کنید و می‌بینید سپاد کجای کار مدرسه می‌نشیند.
+            </p>
+            <ul className="mt-5 space-y-2">
+              {['دسترسی به امکانات سامانه', 'پشتیبانی راه‌اندازی', 'لغو هر زمان'].map((item) => (
+                <li key={item} className="flex items-center gap-2 text-sm text-white/85">
+                  <CheckCircle className="h-4 w-4 shrink-0 text-[#14c4d4]" aria-hidden />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Button size="lg" className="mt-6 h-12 bg-[#14c4d4] px-6 font-bold text-[#082028] hover:bg-[#7eebf2]" asChild>
+              <Link href="/auth/register">
+                شروع دوره آزمایشی
+                <ArrowLeft className="ms-2 h-5 w-5" />
+              </Link>
+            </Button>
           </div>
+          <dl className="rounded-[24px] border border-white/10 bg-white/5 p-5">
+            {[
+              { label: 'زمان راه‌اندازی', val: 'کمتر از ۱ ساعت' },
+              { label: 'نیاز به نصب', val: 'خیر، تحت وب' },
+              { label: 'آموزش اولیه', val: 'رایگان' },
+              { label: 'پشتیبانی', val: '۲۴ ساعته در پلن بالاتر' },
+            ].map((row) => (
+              <div key={row.label} className="flex items-center justify-between gap-4 border-b border-white/10 py-3 last:border-0">
+                <dt className="text-sm text-white/60">{row.label}</dt>
+                <dd className="text-sm font-bold">{row.val}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </div>
     </section>

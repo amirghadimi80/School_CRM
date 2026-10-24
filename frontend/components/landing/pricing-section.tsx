@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, Star, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Check, X, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { SectionHeading } from '@/components/landing/section-heading';
 import { cn } from '@/lib/utils';
@@ -17,8 +17,8 @@ export function PricingSection() {
       description: 'برای آشنایی با سامانه',
       price: { monthly: 0, annual: 0 },
       originalPrice: null,
-      features: ['تا ۵۰ دانش‌آموز', 'تمام امکانات پایه', 'پشتیبانی ایمیل', '۷ روز رایگان'],
-      notIncluded: ['گزارش‌گیری پیشرفته', 'API', 'برندینگ سفارشی'],
+      features: ['تا ۵۰ دانش‌آموز', 'امکانات پایه', 'پشتیبانی ایمیل', '۷ روز رایگان'],
+      notIncluded: ['گزارش‌گیری پیشرفته', 'رابط برنامه‌نویسی', 'برندینگ سفارشی'],
       cta: 'شروع رایگان',
       popular: false,
     },
@@ -27,15 +27,9 @@ export function PricingSection() {
       description: 'مدارس کوچک و متوسط',
       price: { monthly: 290000, annual: 2900000 },
       originalPrice: { monthly: 390000, annual: 3900000 },
-      features: [
-        'تا ۲۰۰ دانش‌آموز',
-        'گزارش‌گیری پیشرفته',
-        'مدیریت مالی',
-        'پشتیبانی تلفنی',
-        'بکاپ روزانه',
-      ],
-      notIncluded: ['API', 'چند شعبه'],
-      cta: 'شروع تریال',
+      features: ['تا ۲۰۰ دانش‌آموز', 'گزارش‌گیری پیشرفته', 'مدیریت مالی', 'پشتیبانی تلفنی', 'بکاپ روزانه'],
+      notIncluded: ['رابط برنامه‌نویسی', 'چند شعبه'],
+      cta: 'شروع دوره آزمایشی',
       popular: true,
     },
     {
@@ -43,29 +37,17 @@ export function PricingSection() {
       description: 'مدارس بزرگ',
       price: { monthly: 590000, annual: 5900000 },
       originalPrice: { monthly: 790000, annual: 7900000 },
-      features: [
-        'تا ۵۰۰ دانش‌آموز',
-        'پشتیبانی ۲۴/۷',
-        'API کامل',
-        'برندینگ سفارشی',
-        'آموزش حضوری',
-      ],
+      features: ['تا ۵۰۰ دانش‌آموز', 'پشتیبانی ۲۴ ساعته', 'رابط برنامه‌نویسی', 'برندینگ سفارشی', 'آموزش حضوری'],
       notIncluded: ['شعبه نامحدود'],
-      cta: 'شروع تریال',
+      cta: 'شروع دوره آزمایشی',
       popular: false,
     },
     {
       name: 'سازمانی',
-      description: 'سازمان‌ها و زنجیره‌ها',
+      description: 'مجموعه‌های چندشعبه',
       price: { monthly: 990000, annual: 9900000 },
       originalPrice: null,
-      features: [
-        'دانش‌آموز نامحدود',
-        'چند شعبه',
-        'سرور اختصاصی',
-        'توسعه سفارشی',
-        'SLA تضمینی',
-      ],
+      features: ['دانش‌آموز نامحدود', 'چند شعبه', 'سرور اختصاصی', 'توسعه سفارشی', 'تعهد سطح خدمت'],
       notIncluded: [],
       cta: 'تماس با فروش',
       popular: false,
@@ -73,24 +55,26 @@ export function PricingSection() {
   ];
 
   const formatPrice = (amount: number) => new Intl.NumberFormat('fa-IR').format(amount);
+  const period = isAnnual ? 'annual' : 'monthly';
 
   return (
-    <section id="pricing" className="py-24">
+    <section id="pricing" className="scroll-mt-24 bg-[#f4f1ea] py-20 lg:py-24">
       <div className="container mx-auto px-4">
         <SectionHeading
           badge="قیمت‌گذاری"
-          title="پلن مناسب برای هر مدرسه"
-          description="۷ روز رایگان — بدون نیاز به کارت بانکی"
+          title="پلنی به اندازه مدرسه"
+          description="۷ روز رایگان، بدون کارت بانکی. قیمت‌ها به تومان است."
         />
 
-        <div className="mb-12 flex justify-center">
-          <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+        <div className="mb-10 flex justify-center">
+          <div className="inline-flex rounded-full bg-[#102033] p-1" role="group" aria-label="دوره پرداخت">
             <button
               type="button"
               onClick={() => setIsAnnual(false)}
+              aria-pressed={!isAnnual}
               className={cn(
-                'rounded-lg px-5 py-2.5 text-sm font-semibold transition-all',
-                !isAnnual ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'
+                'rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                !isAnnual ? 'bg-[#14c4d4] text-[#082028]' : 'text-white/70'
               )}
             >
               ماهانه
@@ -98,69 +82,60 @@ export function PricingSection() {
             <button
               type="button"
               onClick={() => setIsAnnual(true)}
+              aria-pressed={isAnnual}
               className={cn(
-                'relative rounded-lg px-5 py-2.5 text-sm font-semibold transition-all',
-                isAnnual ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'
+                'rounded-full px-5 py-2 text-sm font-semibold transition-colors',
+                isAnnual ? 'bg-[#14c4d4] text-[#082028]' : 'text-white/70'
               )}
             >
               سالانه
-              <Badge className="absolute -top-2 -left-2 bg-emerald-500 text-[10px] text-white">
-                -۲۵٪
-              </Badge>
+              <span className="ms-2 text-[11px] font-bold">۲۵٪ کمتر</span>
             </button>
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {plans.map((plan) => (
-            <div
+            <article
               key={plan.name}
               className={cn(
-                'relative flex flex-col rounded-2xl border bg-white p-6 transition-shadow hover:shadow-lg',
-                plan.popular
-                  ? 'border-blue-300 shadow-lg shadow-blue-100/50 ring-1 ring-blue-200'
-                  : 'border-slate-200/80'
+                'relative flex flex-col rounded-[24px] border bg-white p-6',
+                plan.popular ? 'border-[#102033] shadow-[0_20px_40px_-24px_rgba(16,32,51,0.45)]' : 'border-[#102033]/10'
               )}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-blue-600 px-3 py-1 text-white">
-                    <Star className="ml-1 h-3 w-3" />
-                    پرطرفدار
-                  </Badge>
-                </div>
+                <Badge className="absolute -top-3 start-6 border-0 bg-[#14c4d4] px-3 py-1 text-[#082028] hover:bg-[#14c4d4]">
+                  پرطرفدار
+                </Badge>
               )}
 
-              <div className="mb-6 pt-2 text-center">
-                <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
+              <header className="mb-5 pt-2">
+                <h3 className="text-lg font-extrabold text-[#102033]">{plan.name}</h3>
                 <p className="mt-1 text-xs text-slate-500">{plan.description}</p>
-                <div className="mt-4">
-                  {plan.originalPrice && (
-                    <p className="text-sm text-slate-400 line-through">
-                      {formatPrice(plan.originalPrice[isAnnual ? 'annual' : 'monthly'])} تومان
-                    </p>
-                  )}
-                  <p className="text-3xl font-bold text-slate-900">
-                    {formatPrice(plan.price[isAnnual ? 'annual' : 'monthly'])}
-                    <span className="text-sm font-normal text-slate-500">
-                      {' '}
-                      تومان/{isAnnual ? 'سال' : 'ماه'}
-                    </span>
+                <p className="mt-4 text-3xl font-extrabold text-[#102033]">
+                  {formatPrice(plan.price[period])}
+                  <span className="ms-1 text-sm font-medium text-slate-500">
+                    تومان / {isAnnual ? 'سال' : 'ماه'}
+                  </span>
+                </p>
+                {plan.originalPrice && (
+                  <p className="text-sm text-slate-400 line-through">
+                    {formatPrice(plan.originalPrice[period])} تومان
                   </p>
-                </div>
-              </div>
+                )}
+              </header>
 
               <ul className="mb-6 flex-1 space-y-2.5">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-slate-700">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-                    {f}
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2 text-sm text-[#102033]">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#0c6670]" aria-hidden />
+                    {feature}
                   </li>
                 ))}
-                {plan.notIncluded.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-slate-400">
-                    <X className="mt-0.5 h-4 w-4 shrink-0" />
-                    {f}
+                {plan.notIncluded.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2 text-sm text-slate-400">
+                    <X className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                    {feature}
                   </li>
                 ))}
               </ul>
@@ -169,25 +144,24 @@ export function PricingSection() {
                 className={cn(
                   'w-full',
                   plan.popular
-                    ? 'bg-gradient-to-l from-blue-600 to-blue-700'
-                    : 'bg-slate-900 hover:bg-slate-800'
+                    ? 'bg-[#14c4d4] text-[#082028] hover:bg-[#7eebf2]'
+                    : 'bg-[#102033] text-white hover:bg-[#1a3348]'
                 )}
                 asChild
               >
                 <Link href="/auth/register">
                   {plan.cta}
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <ArrowLeft className="ms-2 h-4 w-4" />
                 </Link>
               </Button>
-            </div>
+            </article>
           ))}
         </div>
 
-        <div className="mt-12 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-8 text-center">
-          <CheckCircle className="mx-auto mb-3 h-8 w-8 text-emerald-600" />
-          <h3 className="text-lg font-bold text-slate-900">تضمین بازگشت وجه ۳۰ روزه</h3>
-          <p className="mx-auto mt-2 max-w-lg text-sm text-slate-600">
-            اگر راضی نبودید، بدون سوال پولتان را برمی‌گردانیم.
+        <div className="mt-10 rounded-[24px] bg-[#102033] px-6 py-8 text-center text-white">
+          <h3 className="text-lg font-extrabold">تضمین بازگشت وجه ۳۰ روزه</h3>
+          <p className="mx-auto mt-2 max-w-lg text-sm leading-7 text-white/70">
+            اگر سامانه به کار مدرسه نخورد، تا ۳۰ روز مبلغ را برمی‌گردانیم.
           </p>
         </div>
       </div>

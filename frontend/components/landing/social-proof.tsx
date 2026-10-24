@@ -1,10 +1,7 @@
-'use client';
-
-import Image from 'next/image';
-import { Star, Quote, Users, TrendingUp, Award, Shield } from 'lucide-react';
+import { Star, Users, TrendingUp, Award, Shield } from 'lucide-react';
 import { SectionHeading } from '@/components/landing/section-heading';
 import { ScrollReveal } from '@/components/landing/scroll-reveal';
-import { landingImages } from '@/lib/landing-images';
+import { cn } from '@/lib/utils';
 
 const testimonials = [
   {
@@ -12,106 +9,105 @@ const testimonials = [
     role: 'مدیر مدرسه فرزانگان',
     content:
       'قبل از سپاد هر روز ساعت‌ها برای گزارش‌گیری وقت می‌گذاشتم. الان همه‌چیز در چند دقیقه انجام می‌شود.',
-    avatar: landingImages.avatars.maryam,
+    mark: 'م',
+    tone: 'bg-[#14c4d4] text-[#082028]',
   },
   {
     name: 'رضا محمدی',
     role: 'مدیر آموزشگاه پارس',
     content:
       'شفافیت مالی و ارتباط با اولیا خیلی بهتر شده. والدین از دسترسی آنلاین به نمرات راضی‌اند.',
-    avatar: landingImages.avatars.reza,
+    mark: 'ر',
+    tone: 'bg-[#243eae] text-white',
   },
   {
     name: 'سارا قاسمی',
     role: 'معاون دبیرستان آینده',
     content:
       'خطای انسانی در ثبت نمرات تقریباً صفر شده و معلمان حضور و غیاب را خیلی سریع‌تر ثبت می‌کنند.',
-    avatar: landingImages.avatars.sara,
+    mark: 'س',
+    tone: 'bg-[#f5c451] text-[#082028]',
   },
 ];
 
 const stats = [
   { icon: Users, value: '۵۰+', label: 'مدرسه فعال' },
-  { icon: TrendingUp, value: '۱۰K+', label: 'دانش‌آموز' },
+  { icon: TrendingUp, value: '+۱۰ هزار', label: 'دانش‌آموز' },
   { icon: Award, value: '۹۸٪', label: 'رضایت' },
-  { icon: Star, value: '۴.۹', label: 'امتیاز کاربران' },
+  { icon: Star, value: '۴٫۹', label: 'امتیاز کاربران' },
 ];
 
 export function SocialProof() {
   return (
-    <section className="py-24">
+    <section className="bg-white py-20 lg:py-24">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <SectionHeading
             badge="اعتماد"
-            title="مدارس ایرانی به سپاد اعتماد کرده‌اند"
-            description="نظرات مدیران و معلمان که هر روز از سامانه استفاده می‌کنند"
+            title="مدارس، سپاد را در کار روزانه گذاشته‌اند"
+            description="آنچه مدیران و معاونان بعد از کنار گذاشتن فایل‌های جدا گفته‌اند."
           />
         </ScrollReveal>
 
-        <div className="mb-16 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {stats.map((s, i) => (
-            <ScrollReveal key={s.label} delay={i * 100}>
-              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 text-center transition-shadow hover:shadow-lg">
-                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-emerald-600">
-                  <s.icon className="h-5 w-5 text-white" />
-                </div>
-                <p className="text-2xl font-bold text-slate-900">{s.value}</p>
-                <p className="mt-1 text-sm text-slate-500">{s.label}</p>
+        <div className="mb-12 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {stats.map((stat, i) => (
+            <ScrollReveal key={stat.label} delay={i * 60}>
+              <div className="rounded-[24px] bg-[#102033] px-4 py-6 text-white">
+                <stat.icon className="mb-4 h-5 w-5 text-[#14c4d4]" aria-hidden />
+                <p className="text-3xl font-extrabold">{stat.value}</p>
+                <p className="mt-1 text-sm text-white/60">{stat.label}</p>
               </div>
             </ScrollReveal>
           ))}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {testimonials.map((t, i) => (
-            <ScrollReveal key={t.name} delay={i * 120}>
-              <div className="group relative h-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl">
-                <div className="relative h-32 overflow-hidden">
-                  <Image
-                    src={landingImages.campus.group}
-                    alt=""
-                    fill
-                    className="object-cover opacity-40 transition-opacity group-hover:opacity-50"
-                    sizes="400px"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white" />
+        <div className="grid gap-4 md:grid-cols-3">
+          {testimonials.map((item, i) => (
+            <ScrollReveal key={item.name} delay={i * 80}>
+              <figure className="flex h-full flex-col rounded-[24px] border border-[#102033]/10 bg-[#f7f4ee] p-6">
+                <div className="mb-4 flex gap-0.5" aria-hidden>
+                  {Array.from({ length: 5 }).map((_, star) => (
+                    <Star key={star} className="h-3.5 w-3.5 fill-[#f5c451] text-[#f5c451]" />
+                  ))}
                 </div>
-                <div className="relative -mt-10 px-6 pb-6">
-                  <div className="mb-4 flex h-14 w-14 overflow-hidden rounded-full border-4 border-white shadow-md">
-                    <Image src={t.avatar} alt={t.name} width={56} height={56} className="object-cover" />
-                  </div>
-                  <Quote className="mb-2 h-6 w-6 text-blue-100" />
-                  <div className="mb-3 flex gap-0.5">
-                    {[...Array(5)].map((_, j) => (
-                      <Star key={j} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <p className="mb-5 text-sm leading-relaxed text-slate-600">{t.content}</p>
-                  <div className="border-t border-slate-100 pt-4">
-                    <p className="text-sm font-semibold text-slate-900">{t.name}</p>
-                    <p className="text-xs text-slate-500">{t.role}</p>
-                  </div>
-                </div>
-              </div>
+                <blockquote className="flex-1 text-sm leading-8 text-[#102033]">
+                  <span className="ms-1 text-3xl font-extrabold leading-none text-[#14c4d4]" aria-hidden>
+                    «
+                  </span>
+                  {item.content}
+                </blockquote>
+                <figcaption className="mt-6 flex items-center gap-3 border-t border-[#102033]/10 pt-4">
+                  <span
+                    className={cn(
+                      'flex h-11 w-11 items-center justify-center rounded-full text-base font-extrabold',
+                      item.tone
+                    )}
+                    aria-hidden
+                  >
+                    {item.mark}
+                  </span>
+                  <span>
+                    <span className="block text-sm font-bold text-[#102033]">{item.name}</span>
+                    <span className="block text-xs text-slate-500">{item.role}</span>
+                  </span>
+                </figcaption>
+              </figure>
             </ScrollReveal>
           ))}
         </div>
 
-        <ScrollReveal delay={200}>
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-8 rounded-2xl border border-slate-200/80 bg-slate-50 px-8 py-6">
-            {[
-              { icon: Shield, label: 'رمزنگاری SSL' },
-              { icon: Shield, label: 'سرورهای ایران' },
-              { icon: Shield, label: 'پشتیبانی فارسی' },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-2 text-sm text-slate-600">
-                <item.icon className="h-4 w-4 text-emerald-600" />
-                {item.label}
-              </div>
-            ))}
-          </div>
-        </ScrollReveal>
+        <ul className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-600">
+          {[
+            { label: 'رمزنگاری SSL' },
+            { label: 'سرورهای ایران' },
+            { label: 'پشتیبانی فارسی' },
+          ].map((item) => (
+            <li key={item.label} className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-[#0c6670]" aria-hidden />
+              {item.label}
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
