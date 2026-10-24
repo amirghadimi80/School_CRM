@@ -1,81 +1,65 @@
-'use client';
-
-import Image from 'next/image';
 import { FileX, Clock, Users, AlertTriangle } from 'lucide-react';
 import { SectionHeading } from '@/components/landing/section-heading';
 import { ScrollReveal } from '@/components/landing/scroll-reveal';
-import { landingImages } from '@/lib/landing-images';
+import { ScatteredDesk } from '@/components/landing/visuals';
 
 const painPoints = [
   {
     icon: FileX,
     title: 'پراکندگی اطلاعات',
-    description: 'داده‌های دانش‌آموزان، نمرات و مالی در فایل‌ها و سامانه‌های جدا — بدون یکپارچگی.',
-    color: 'text-red-600 bg-red-50',
+    description: 'داده دانش‌آموز، نمره و امور مالی در فایل‌ها و سامانه‌های جدا می‌ماند و به هم وصل نیست.',
   },
   {
     icon: Clock,
     title: 'اتلاف وقت',
-    description: 'ساعت‌ها کار دستی برای حضور و غیاب، کارنامه و گزارش‌گیری روزانه.',
-    color: 'text-amber-600 bg-amber-50',
+    description: 'حضور و غیاب، کارنامه و گزارش روزانه هنوز با دست جمع می‌شود و ساعت می‌گیرد.',
   },
   {
     icon: Users,
     title: 'خطای انسانی',
-    description: 'اشتباه در ثبت نمرات و محاسبات به‌دلیل فرآیندهای غیرخودکار.',
-    color: 'text-orange-600 bg-orange-50',
+    description: 'ثبت نمره و محاسبه، وقتی خودکار نباشد، جا برای اشتباه می‌گذارد.',
   },
   {
     icon: AlertTriangle,
     title: 'دسترسی محدود',
-    description: 'عدم دسترسی لحظه‌ای والدین و معلمان به اطلاعات مورد نیاز.',
-    color: 'text-violet-600 bg-violet-50',
+    description: 'معلم و اولیا همان لحظه به چیزی که لازم دارند نمی‌رسند.',
   },
 ];
 
+const steps = ['۰۱', '۰۲', '۰۳', '۰۴'];
+
 export function PainPoints() {
   return (
-    <section className="bg-slate-50 py-24">
+    <section className="bg-[#f4f1ea] py-20 lg:py-24">
       <div className="container mx-auto px-4">
-        <ScrollReveal>
-          <SectionHeading
-            badge="چالش‌ها"
-            title="مدیریت مدرسه بدون سامانه یکپارچه"
-            description="بسیاری از مدارس هنوز با روش‌های سنتی درگیر این مشکلات هستند"
-          />
-        </ScrollReveal>
-
-        <div className="grid items-center gap-10 lg:grid-cols-5">
-          <ScrollReveal direction="right" className="relative hidden lg:col-span-2 lg:block">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl shadow-xl">
-              <Image
-                src={landingImages.campus.studying}
-                alt="دانش‌آموز در حال مطالعه"
-                fill
-                className="object-cover"
-                sizes="400px"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-blue-900/50 to-transparent" />
-              <div className="absolute bottom-6 right-6 left-6 rounded-xl bg-white/90 p-4 backdrop-blur-sm">
-                <p className="text-sm font-semibold text-slate-900">مدیریت پراکنده و زمان‌بر</p>
-                <p className="mt-1 text-xs text-slate-600">مدیریت دستی = خطا + اتلاف وقت</p>
-              </div>
-            </div>
+        <div className="grid items-start gap-12 lg:grid-cols-2">
+          <ScrollReveal>
+            <SectionHeading
+              badge="چالش‌ها"
+              title="وقتی مدرسه چند دفتر جدا دارد"
+              description="نمره در یک فایل، حضور در دفتر دیگر، شهریه در اکسل. این پراکندگی وقت می‌گیرد و خطا می‌سازد."
+              align="right"
+              className="mb-8"
+            />
+            <ol className="space-y-3">
+              {painPoints.map((point, i) => (
+                <li key={point.title} className="flex gap-4 rounded-2xl border border-[#102033]/8 bg-white p-4">
+                  <span className="mt-0.5 text-sm font-extrabold text-[#0c6670]">{steps[i]}</span>
+                  <div>
+                    <h3 className="flex items-center gap-2 font-bold text-[#102033]">
+                      <point.icon className="h-4 w-4 text-[#0c6670]" aria-hidden />
+                      {point.title}
+                    </h3>
+                    <p className="mt-1 text-sm leading-7 text-slate-600">{point.description}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </ScrollReveal>
 
-          <div className="grid gap-5 sm:grid-cols-2 lg:col-span-3">
-            {painPoints.map((point, i) => (
-              <ScrollReveal key={point.title} delay={i * 100}>
-                <div className="h-full rounded-2xl border border-slate-200/80 bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-lg">
-                  <div className={`mb-4 inline-flex rounded-xl p-3 ${point.color}`}>
-                    <point.icon className="h-5 w-5" />
-                  </div>
-                  <h3 className="mb-2 font-bold text-slate-900">{point.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-600">{point.description}</p>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
+          <ScrollReveal direction="left" className="lg:pt-16">
+            <ScatteredDesk />
+          </ScrollReveal>
         </div>
       </div>
     </section>

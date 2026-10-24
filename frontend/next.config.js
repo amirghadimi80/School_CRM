@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['localhost', 'api.schoolcrm.com', 'images.unsplash.com'],
+    domains: ['localhost', 'api.schoolcrm.com'],
   },
   async rewrites() {
     return [

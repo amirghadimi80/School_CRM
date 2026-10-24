@@ -1,111 +1,99 @@
-'use client';
-
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Zap, Shield, TrendingUp, ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { SectionHeading } from '@/components/landing/section-heading';
 
 const benefits = [
   {
     icon: CheckCircle,
-    title: 'یکپارچگی کامل',
-    description: 'تمام فرآیندهای مدیریتی در یک پلتفرم هماهنگ',
+    title: 'یکپارچگی',
+    description: 'حضور، نمره، برنامه و شهریه در یک سامانه هماهنگ می‌ماند.',
   },
   {
     icon: Zap,
-    title: 'صرفه‌جویی در زمان',
-    description: 'کاهش چشمگیر کارهای دستی و تکراری',
+    title: 'کار کمترِ تکراری',
+    description: 'ثبت دستی و گزارش‌های پراکنده جای خود را به یک گردش کار مشخص می‌دهد.',
   },
   {
     icon: Shield,
-    title: 'دقت و امنیت',
-    description: 'کاهش خطا با فرآیندهای خودکار و دسترسی کنترل‌شده',
+    title: 'دسترسی کنترل‌شده',
+    description: 'هر نقش فقط بخش مربوط به خودش را می‌بیند.',
   },
   {
     icon: TrendingUp,
-    title: 'گزارش‌گیری هوشمند',
-    description: 'دسترسی سریع به آمار و تحلیل عملکرد',
+    title: 'گزارش دم‌دست',
+    description: 'آمار کلاس و وضعیت مالی را بدون جمع‌کردن فایل جدا می‌بینید.',
   },
 ];
 
 const modules = [
-  { title: 'حضور و غیاب', sub: 'آنلاین و لحظه‌ای', color: 'border-emerald-100 bg-emerald-50/50' },
-  { title: 'نمرات و کارنامه', sub: 'دیجیتال', color: 'border-blue-100 bg-blue-50/50' },
-  { title: 'برنامه هفتگی', sub: 'خودکار', color: 'border-violet-100 bg-violet-50/50' },
-  { title: 'امور مالی', sub: 'شهریه و پرداخت', color: 'border-amber-100 bg-amber-50/50' },
+  { title: 'حضور و غیاب', sub: 'ثبت لحظه‌ای', tone: 'bg-[#102033] text-white' },
+  { title: 'نمرات و کارنامه', sub: 'ورود و مشاهده', tone: 'bg-[#14c4d4] text-[#082028]' },
+  { title: 'برنامه هفتگی', sub: 'چیدمان کلاس و معلم', tone: 'bg-[#243eae] text-white' },
+  { title: 'امور مالی', sub: 'شهریه و پرداخت', tone: 'bg-[#f5c451] text-[#082028]' },
 ];
 
 export function Solution() {
   return (
-    <section id="about" className="py-24">
+    <section id="about" className="scroll-mt-24 bg-[#f4f1ea] py-20 lg:py-24">
       <div className="container mx-auto px-4">
-        <div className="grid items-center gap-14 lg:grid-cols-2">
-          <div className="order-2 lg:order-1">
-            <div className="relative">
-              <div className="absolute -inset-3 rounded-3xl bg-gradient-to-br from-blue-100/60 to-emerald-100/60 blur-xl" />
-              <div className="relative rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xl">
-                <div className="mb-6 flex items-center gap-3">
-                  <img src="/images/logo.png" alt="سپاد" className="h-10 w-10 object-contain" />
-                  <div>
-                    <p className="font-bold text-slate-900">داشبورد یکپارچه سپاد</p>
-                    <p className="text-sm text-slate-500">همه‌چیز در یک نگاه</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {modules.map((m) => (
-                    <div key={m.title} className={`rounded-xl border p-4 ${m.color}`}>
-                      <p className="font-semibold text-slate-800">{m.title}</p>
-                      <p className="text-xs text-slate-500">{m.sub}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-6 grid grid-cols-3 gap-3 text-center">
-                  {[
-                    { val: '۱۰x', label: 'سرعت' },
-                    { val: '۱۰۰٪', label: 'دقت' },
-                    { val: '۲۴/۷', label: 'دسترسی' },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-xl bg-slate-50 py-3">
-                      <p className="text-lg font-bold text-blue-600">{s.val}</p>
-                      <p className="text-xs text-slate-500">{s.label}</p>
-                    </div>
-                  ))}
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div className="relative">
+            <div className="absolute -inset-4 -z-10 rounded-[36px] bg-[#14c4d4]/15 blur-2xl" aria-hidden />
+            <div className="rounded-[28px] border border-[#102033]/10 bg-white p-6 shadow-[0_24px_50px_-28px_rgba(16,32,51,0.4)] sm:p-8">
+              <div className="mb-6 flex items-center gap-3">
+                <Image src="/images/logo.png" alt="" width={44} height={44} className="h-11 w-11 object-contain" />
+                <div>
+                  <p className="font-extrabold text-[#102033]">داشبورد سپاد</p>
+                  <p className="text-sm text-slate-500">چهار کار اصلی مدرسه، کنار هم</p>
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                {modules.map((module) => (
+                  <div key={module.title} className={`rounded-2xl p-4 ${module.tone}`}>
+                    <p className="font-bold">{module.title}</p>
+                    <p className="mt-1 text-xs opacity-80">{module.sub}</p>
+                  </div>
+                ))}
+              </div>
+              <ul className="mt-5 grid grid-cols-3 gap-2 text-center text-xs font-semibold text-[#102033]">
+                {['تحت وب', 'تقویم شمسی', 'نقش جدا'].map((item) => (
+                  <li key={item} className="rounded-xl bg-[#f4f1ea] px-2 py-3">
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
-          <div className="order-1 space-y-8 lg:order-2">
+          <div>
             <SectionHeading
               badge="راه‌حل"
-              title="یک پلتفرم برای کل مدرسه"
-              description="سپاد تمام نیازهای مدیریتی، آموزشی و مالی مدرسه را در یک سامانه واحد پوشش می‌دهد"
+              title="یک سامانه برای کار مدرسه"
+              description="سپاد مدیریت روزانه، کار آموزشی و امور مالی را در یک جا جمع می‌کند."
               align="right"
-              className="mb-0"
+              className="mb-8"
             />
 
-            <div className="space-y-5">
-              {benefits.map((b) => (
-                <div key={b.title} className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50">
-                    <b.icon className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-900">{b.title}</h3>
-                    <p className="mt-0.5 text-sm text-slate-600">{b.description}</p>
-                  </div>
-                </div>
+            <ul className="space-y-5">
+              {benefits.map((benefit) => (
+                <li key={benefit.title} className="flex items-start gap-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#102033] text-[#14c4d4]">
+                    <benefit.icon className="h-5 w-5" aria-hidden />
+                  </span>
+                  <span>
+                    <span className="block font-bold text-[#102033]">{benefit.title}</span>
+                    <span className="mt-0.5 block text-sm leading-7 text-slate-600">{benefit.description}</span>
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
 
-            <Button
-              size="lg"
-              className="bg-gradient-to-l from-emerald-600 to-blue-600 shadow-md"
-              asChild
-            >
+            <Button size="lg" className="mt-8 h-12 bg-[#102033] px-7 text-white hover:bg-[#1a3348]" asChild>
               <Link href="/auth/register">
-                همین الان شروع کنید
-                <ArrowLeft className="mr-2 h-5 w-5" />
+                همین حالا شروع کنید
+                <ArrowLeft className="ms-2 h-5 w-5" />
               </Link>
             </Button>
           </div>

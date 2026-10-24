@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Clock,
   TrendingUp,
@@ -12,80 +10,106 @@ import {
 } from 'lucide-react';
 import { SectionHeading } from '@/components/landing/section-heading';
 import { ScrollReveal } from '@/components/landing/scroll-reveal';
+import { cn } from '@/lib/utils';
 
 const benefits = [
   {
     icon: Clock,
-    title: 'صرفه‌جویی زمانی',
-    description: 'کاهش زمان فرآیندهای اداری و گزارش‌گیری',
-    color: 'text-emerald-600 bg-emerald-50',
-  },
-  {
-    icon: TrendingUp,
-    title: 'افزایش کارایی',
-    description: 'بهبود بهره‌وری تیم مدیریتی و آموزشی',
-    color: 'text-blue-600 bg-blue-50',
-  },
-  {
-    icon: Users,
-    title: 'رضایت ذی‌نفعان',
-    description: 'ارتباط بهتر با والدین و دانش‌آموزان',
-    color: 'text-violet-600 bg-violet-50',
-  },
-  {
-    icon: Shield,
-    title: 'دقت اطلاعات',
-    description: 'کاهش خطا در ثبت و پردازش داده‌ها',
-    color: 'text-red-600 bg-red-50',
-  },
-  {
-    icon: Smartphone,
-    title: 'دسترسی همه‌جا',
-    description: 'مدیریت از موبایل، تبلت و دسکتاپ',
-    color: 'text-amber-600 bg-amber-50',
+    title: 'وقت اداری کمتر',
+    description: 'حضور، کارنامه و گزارش روزانه را از بین چند فایل جمع نمی‌کنید.',
+    span: 'md:col-span-2 md:row-span-2',
+    featured: true,
   },
   {
     icon: BarChart3,
-    title: 'گزارش‌دهی آنی',
-    description: 'دسترسی سریع به آمار و تحلیل‌ها',
-    color: 'text-indigo-600 bg-indigo-50',
+    title: 'گزارش دم‌دست',
+    description: 'آمار کلاس را همان روز می‌بینید، نه آخر ماه.',
   },
   {
     icon: Calendar,
     title: 'تقویم فارسی',
-    description: 'سازگار با تقویم رسمی ایران',
-    color: 'text-teal-600 bg-teal-50',
+    description: 'تاریخ‌ها با تقویم رسمی ایران ثبت می‌شود.',
   },
   {
     icon: DollarSign,
-    title: 'مدیریت مالی',
-    description: 'کنترل شهریه، پرداخت‌ها و بدهی‌ها',
-    color: 'text-emerald-600 bg-emerald-50',
+    title: 'شهریه',
+    description: 'پرداخت، بدهی و تسویه در همان سامانه می‌ماند.',
+  },
+  {
+    icon: Smartphone,
+    title: 'موبایل و دسکتاپ',
+    description: 'از مرورگر گوشی، تبلت و رایانه وارد می‌شوید.',
+  },
+  {
+    icon: Shield,
+    title: 'دقت ثبت',
+    description: 'گردش مشخص، جای حساب‌کتاب پراکنده را می‌گیرد.',
+  },
+  {
+    icon: Users,
+    title: 'اولیا در جریان',
+    description: 'نمره و غیبت را بدون تماس مکرر پیگیری می‌کنند.',
+  },
+  {
+    icon: TrendingUp,
+    title: 'کار تیم مدرسه',
+    description: 'مدیر، معاون و معلم روی یک تصویر مشترک کار می‌کنند.',
+    span: 'md:col-span-2',
   },
 ];
 
+const heat = [3, 4, 2, 5, 4, 3, 5, 4, 5, 2, 4, 3, 5, 4];
+
 export function BenefitsGrid() {
   return (
-    <section id="features" className="bg-slate-50 py-24">
+    <section id="features" className="scroll-mt-24 bg-[#f4f1ea] py-20 lg:py-24">
       <div className="container mx-auto px-4">
         <ScrollReveal>
           <SectionHeading
             badge="امکانات"
-            title="هر آنچه یک مدرسه نیاز دارد"
-            description="ابزارهای کامل برای مدیریت روزانه مدرسه، از ثبت‌نام تا کارنامه"
+            title="ابزار کار روزانه مدرسه"
+            description="از ثبت‌نام و حضور تا کارنامه و شهریه، همان کارهایی که هر هفته تکرار می‌شود."
           />
         </ScrollReveal>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {benefits.map((b, i) => (
-            <ScrollReveal key={b.title} delay={i * 60}>
-              <div className="group h-full rounded-2xl border border-slate-200/80 bg-white p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-200/50">
-                <div className={`mb-4 inline-flex rounded-xl p-3 ${b.color} transition-transform group-hover:scale-110`}>
-                  <b.icon className="h-5 w-5" />
-                </div>
-                <h3 className="mb-1.5 font-bold text-slate-900">{b.title}</h3>
-                <p className="text-sm leading-relaxed text-slate-600">{b.description}</p>
-              </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {benefits.map((benefit, i) => (
+            <ScrollReveal key={benefit.title} delay={i * 40} className={benefit.span}>
+              <article
+                className={cn(
+                  'flex h-full flex-col rounded-[24px] border border-[#102033]/10 bg-white p-5 transition-transform duration-300 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0',
+                  benefit.featured && 'bg-[#102033] text-white'
+                )}
+              >
+                <span
+                  className={cn(
+                    'mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl',
+                    benefit.featured ? 'bg-[#14c4d4] text-[#082028]' : 'bg-[#e7f4f3] text-[#0c6670]'
+                  )}
+                >
+                  <benefit.icon className="h-5 w-5" aria-hidden />
+                </span>
+                <h3 className={cn('font-extrabold', benefit.featured ? 'text-2xl leading-snug' : 'text-base')}>
+                  {benefit.title}
+                </h3>
+                <p className={cn('mt-2 text-sm leading-7', benefit.featured ? 'text-white/75' : 'text-slate-600')}>
+                  {benefit.description}
+                </p>
+                {benefit.featured && (
+                  <div className="mt-6" aria-hidden>
+                    <p className="mb-2 text-xs text-white/50">نمونه تراکم حضور دو هفته</p>
+                    <div className="grid grid-cols-7 gap-1.5">
+                      {heat.map((level, index) => (
+                        <span
+                          key={index}
+                          className="aspect-square rounded-md"
+                          style={{ background: `rgba(20, 196, 212, ${0.25 + level * 0.15})` }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </article>
             </ScrollReveal>
           ))}
         </div>
